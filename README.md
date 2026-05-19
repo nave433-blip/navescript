@@ -1,8 +1,11 @@
 # Nλvescript (NaveScript)
 
-**Author:** Evan Shipley
+**Author:** Evan Shipley  
+**Status:** Production-Hardened Polyglot Runtime (v0.3.0)  
 
-A universal, polyglot coding language and interpreter built for performance and portability. Nλvescript is the "Universal Omni-Language," designed to bridge multiple languages, capabilities, and hardware targets under a single, highly-optimized runtime.
+Nλvescript is the "Universal Omni-Language," a high-performance, polyglot coding language and interpreter designed to bridge multiple languages, capabilities, and hardware targets under a single, highly-optimized, and secure runtime.
+
+---
 
 ## 🎯 Why Nλvescript?
 
@@ -12,43 +15,48 @@ Traditional interop tools like `cgo` (Go), `PyO3` (Python-Rust), or `rust-cxx` a
 | :--- | :--- | :--- | :--- |
 | **cgo** | Go ↔ C | High (manual FFI) | Moderate |
 | **PyO3** | Rust ↔ Python | Moderate (manual binding) | High |
-| **rust-cxx** | Rust ↔ C++ | Moderate (manual binding) | High |
 | **Nλvescript** | **Universal** | **Low (Unified IR)** | **Near-Native** |
 
 ### The Nλvescript Advantage:
-- **Unified IR (Intermediate Representation)**: Nλvescript compiles foreign code into a single, high-performance IR, eliminating the need for language-specific FFI wrappers.
-- **WASI 0.2 Component Model**: Standardized interface definitions (WIT) enable true, secure "LEGO brick" interoperability without custom glue code.
-- **Polyglot Transmutation**: State and data structures are automatically converted into native Nλvescript types across runtime boundaries.
-- **Capability-Based Sandboxing**: Granular, declarative control over what external modules can access, ensuring security by default.
+- **Unified IR (Intermediate Representation)**: Compiles foreign code into a single, high-performance IR, eliminating language-specific FFI wrappers.
+- **WASI 0.2 Component Model**: Uses WIT (WebAssembly Interface Types) for secure, language-agnostic modularity.
+- **Polyglot Transmutation**: Seamlessly converts foreign data structures into native Nλvescript types.
+- **Hardened Security**: Includes a load-time **NASM Verifier** for memory safety and a **NASI Capability Host** for granular system-call security.
 
-Nλvescript is the **"Universal Glue"** that simplifies cross-language development, making polyglot programming as simple as writing native code.
+---
 
+## 🌍 Code Translation & Interop
 
-- **Supported Languages**: Python, JavaScript, Ruby, Bash, Perl.
+Nλvescript features a unique **Polyglot Transmutation Engine** that allows it to translate, execute, and verify code from: **Python, JavaScript, Ruby, Bash, and Perl**.
+
 - **Transmutation Loop**:
-    1. **Translate**: Accepts foreign language source code.
-    2. **Execute**: Runs foreign code in a sandboxed environment.
-    3. **Transmute**: Converts the foreign output/state into Nλvescript's native JSON representation.
-    4. **Verify**: Runs native Nλvescript operations (addition, string manipulation, array reversal) against the foreign output to ensure semantic correctness.
-    5. **Assert**: Performs rigorous equality checks (Assertion engine) to guarantee the translation matches the origin behavior.
+    1. **Translate**: Accepts foreign code.
+    2. **Execute**: Runs in a sandboxed, capability-negotiated environment.
+    3. **Transmute**: Converts foreign output/state into native JSON representations.
+    4. **Verify**: Runs native Nλvescript logic against foreign outputs to ensure semantic correctness.
+    5. **Assert**: Performs rigorous equality checks (Assertion engine) to guarantee translation fidelity.
 
-This cyclic verification loop ensures that Nλvescript-translated code functions exactly as the origin language intended.
+---
 
+## 🚀 Core Features (v0.3.0)
 
-- **WASI 0.2 (Preview 2)**: Built on the WebAssembly Component Model for modern, composable binaries.
-- **Component Model**: True "LEGO brick" modularity with rich, language-agnostic types via WIT.
-- **GraalVM Polyglot**: Bridge for zero-copy execution of Python, JavaScript, and Ruby.
-- **Capability-Based Security**: Explicit declaration of required OS permissions at the "World" level.
-- **High-Performance Runtime**: Powered by **Wasmtime** component-model engine.
+- **NASM (Nλvescript Assembly)**: RISC-like, human-readable assembly format for low-level systems programming.
+- **NASI (Nλvescript System Interface)**: Self-hosted, capability-based interface for accessing OS resources securely.
+- **NVsodide**: Browser-resident WASM runtime with JS-bridge security negotiation.
+- **Omni-Bridge SDK**: Standardized FFI layer (`include/nave_api.h`) for embedding in **Rust, Go, Swift, Java, C++, and Python**.
+
+---
 
 ## 🛠 Installation
 
 ```bash
 # Requires Rust and Cargo
-git clone https://github.com/naveos/navescript
+git clone https://github.com/nave433-blip/navescript
 cd navescript
 cargo build --release
 ```
+
+---
 
 ## 🏃 Usage
 
@@ -59,23 +67,23 @@ cargo run -- run examples/wasi_test.nave
 
 ### Compile to WebAssembly Component (WAT)
 ```bash
-cargo run -- compile examples/wasi_test.nave --output component.wat
+cargo run -- compile examples/nasm_example.nave --output demo.wat
 ```
 
-### Check Bridge Status
+### Check Polyglot Bridge Status
 ```bash
 cargo run -- status
 ```
 
+---
+
 ## 📂 Repository Structure
 
-- `src/parser.rs`: Component and World definition parser.
-- `src/ir.rs`: Intermediate Representation for Component Interfaces.
-- `src/compiler.rs`: Translates Nλ-IR to WASI 0.2 Component WAT.
-- `src/runtime.rs`: Wasmtime component-model execution engine.
-- `src/polyglot.rs`: GraalVM cross-language bridge architecture.
-- `wit/navescript.wit`: Interface definition for the Nλvescript world.
+- `src/`: Core engine (Compiler, Runtime, Parser, IR).
+- `examples/`: NASM/NASI reference specs and test programs.
+- `sdk/`: Universal FFI bindings for host languages (Rust, Go, Python, etc.).
+- `wit/`: Interface definitions for WASI 0.2 component interoperability.
+- `plugins/`: Multi-language plugin registry.
 
 ## ⚖️ License
-
 MIT License
