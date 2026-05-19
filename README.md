@@ -4,9 +4,25 @@
 
 A universal, polyglot coding language and interpreter built for performance and portability. Nλvescript is the "Universal Omni-Language," designed to bridge multiple languages, capabilities, and hardware targets under a single, highly-optimized runtime.
 
-## 🌍 Code Translation & Interop
+## 🎯 Why Nλvescript?
 
-Nλvescript features a unique **Polyglot Transmutation Engine** that allows it to translate, execute, and verify code from multiple languages:
+Traditional interop tools like `cgo` (Go), `PyO3` (Python-Rust), or `rust-cxx` are fragmented and require custom glue code for every language pair. Nλvescript solves this by acting as a **Universal Polyglot Layer**:
+
+| Tool | Scope | Complexity | Performance |
+| :--- | :--- | :--- | :--- |
+| **cgo** | Go ↔ C | High (manual FFI) | Moderate |
+| **PyO3** | Rust ↔ Python | Moderate (manual binding) | High |
+| **rust-cxx** | Rust ↔ C++ | Moderate (manual binding) | High |
+| **Nλvescript** | **Universal** | **Low (Unified IR)** | **Near-Native** |
+
+### The Nλvescript Advantage:
+- **Unified IR (Intermediate Representation)**: Nλvescript compiles foreign code into a single, high-performance IR, eliminating the need for language-specific FFI wrappers.
+- **WASI 0.2 Component Model**: Standardized interface definitions (WIT) enable true, secure "LEGO brick" interoperability without custom glue code.
+- **Polyglot Transmutation**: State and data structures are automatically converted into native Nλvescript types across runtime boundaries.
+- **Capability-Based Sandboxing**: Granular, declarative control over what external modules can access, ensuring security by default.
+
+Nλvescript is the **"Universal Glue"** that simplifies cross-language development, making polyglot programming as simple as writing native code.
+
 
 - **Supported Languages**: Python, JavaScript, Ruby, Bash, Perl.
 - **Transmutation Loop**:
