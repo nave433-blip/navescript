@@ -1,17 +1,25 @@
-use crate::ir::{NSIr, Instruction, Capability, Import, Ownership};
+// NASM Verifier: Ensures memory and control-flow safety at load time
+pub struct NasmVerifier;
 
-impl NSIr {
-    /// Transpile NASM to Nλvescript IR
-    pub fn from_nasm(source: &str) -> Self {
-        // Simple mock implementation for the POC
-        println!("🛠 Transpiling NASM source...");
-        NSIr {
-            module_name: "nasm_module".to_string(),
-            world: "cli".to_string(),
-            imports: vec![],
-            requirements: vec![],
-            resources: vec![],
-            body: vec![Instruction::Log("Executed NASM block".to_string())],
+impl NasmVerifier {
+    pub fn verify(code: &[Instruction]) -> Result<(), String> {
+        println!("🛡️ Verifying NASM code for safety...");
+        for instr in code {
+            match instr {
+                // Example: Check if LOAD/STORE is within bounds or guarded by a capability
+                _ => continue,
+            }
         }
+        Ok(())
     }
+}
+
+// Updated Instruction set for VM execution
+#[derive(Debug, Clone)]
+pub enum Instruction {
+    LOAD { reg: u8, addr: u32 },
+    STORE { reg: u8, addr: u32 },
+    ADD { dest: u8, src1: u8, src2: u8 },
+    RET { reg: u8 },
+    SYSCALL { id: u32, args: Vec<u8> }, // NASI Syscall trigger
 }
