@@ -4,6 +4,10 @@ mod compiler;
 mod runtime;
 mod polyglot;
 mod plugin;
+mod nasm;
+mod nasi;
+mod ffi;
+mod cranelift_backend;
 
 use clap::{Parser, Subcommand};
 use anyhow::Result;

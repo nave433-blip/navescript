@@ -1,1 +1,5 @@
 /target
+*.o
+*.wat
+*.wasm
+demo.*

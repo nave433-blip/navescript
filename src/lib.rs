@@ -7,6 +7,7 @@ pub mod plugin;
 pub mod nasm;
 pub mod nasi;
 pub mod ffi;
+pub mod cranelift_backend;
 
 pub use parser::NaveProgram;
 pub use runtime::NaveRuntime;

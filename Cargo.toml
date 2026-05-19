@@ -6,6 +6,9 @@ authors = ["Evan Shipley"]
 description = "Nλvescript: A Universal Polyglot Language & WASI Runtime"
 repository = "https://github.com/naveos/navescript"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 # CLI and Error Handling
 clap = { version = "4.5", features = ["derive"] }
@@ -19,6 +22,15 @@ serde_json = "1.0"
 # WASM Runtime
 wasmtime = "26.0"
 wasmtime-wasi = "26.0"
+wasmtime-component-macro = "26.0"
+
+# Native Compilation (Cranelift)
+cranelift = "0.110"
+cranelift-frontend = "0.110"
+cranelift-module = "0.110"
+cranelift-native = "0.110"
+cranelift-object = "0.110"
+target-lexicon = "0.12"
 
 # Utilities
 log = "0.4"
