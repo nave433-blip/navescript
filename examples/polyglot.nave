@@ -1,0 +1,21 @@
+{
+  "version": "0.3.0",
+  "module": "polyglot_test",
+  "world": "cli",
+  "steps": [
+    {
+      "op": "log",
+      "message": "Nλvescript initiating Python polyglot execution..."
+    },
+    {
+      "op": "polyglot_eval",
+      "lang": "python",
+      "return_var": "math_result",
+      "code": "import math\nresult = {'pi': math.pi, 'calc': [math.pow(2, 3), math.sqrt(16)], 'message': 'Hello from Python inside Nλvescript!'}"
+    },
+    {
+      "op": "answer",
+      "var": "math_result"
+    }
+  ]
+}

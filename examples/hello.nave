@@ -1,0 +1,17 @@
+{
+  "version": "0.2",
+  "name": "hello_world",
+  "module": "demo",
+  "intent": "simple computation with error handling",
+  "resources": {
+    "target": "auto",
+    "parallel": false
+  },
+  "steps": [
+    {
+      "op": "add",
+      "a": "5",
+      "b": "37"
+    }
+  ]
+}

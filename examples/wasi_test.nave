@@ -1,0 +1,21 @@
+{
+  "version": "0.3.0",
+  "module": "image_processor",
+  "world": "cli",
+  "imports": {
+    "wasi:filesystem/types": "fs",
+    "wasi:cli/stdout": "stdout"
+  },
+  "capabilities": ["filesystem/read", "random"],
+  "steps": [
+    {
+      "op": "log",
+      "message": "Nλvescript Component Model starting..."
+    },
+    {
+      "op": "try",
+      "body": [],
+      "retry": 3
+    }
+  ]
+}

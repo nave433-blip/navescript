@@ -1,0 +1,39 @@
+{
+  "version": "0.3.0",
+  "module": "translation_compare",
+  "world": "cli",
+  "steps": [
+    { "op": "log", "message": "--- Test 1: Python Addition ---" },
+    { "op": "polyglot_eval", "lang": "python", "code": "result = 15 + 27", "return_var": "py_res" },
+    { "op": "set", "var": "n_arg1", "value": 15 },
+    { "op": "set", "var": "n_arg2", "value": 27 },
+    { "op": "native_op", "operator": "add", "args": ["n_arg1", "n_arg2"], "return_var": "nave_res_1" },
+    { "op": "assert_eq", "left": "py_res", "right": "nave_res_1", "message": "Python addition matched native Nλvescript addition." },
+
+    { "op": "log", "message": "--- Test 2: JavaScript Concatenation ---" },
+    { "op": "polyglot_eval", "lang": "javascript", "code": "result = 'Hello ' + 'Nave';", "return_var": "js_res" },
+    { "op": "set", "var": "j_arg1", "value": "Hello " },
+    { "op": "set", "var": "j_arg2", "value": "Nave" },
+    { "op": "native_op", "operator": "concat", "args": ["j_arg1", "j_arg2"], "return_var": "nave_res_2" },
+    { "op": "assert_eq", "left": "js_res", "right": "nave_res_2", "message": "JavaScript concat matched native Nλvescript concat." },
+
+    { "op": "log", "message": "--- Test 3: Ruby Multiplication ---" },
+    { "op": "polyglot_eval", "lang": "ruby", "code": "result = 8 * 9", "return_var": "rb_res" },
+    { "op": "set", "var": "r_arg1", "value": 8 },
+    { "op": "set", "var": "r_arg2", "value": 9 },
+    { "op": "native_op", "operator": "multiply", "args": ["r_arg1", "r_arg2"], "return_var": "nave_res_3" },
+    { "op": "assert_eq", "left": "rb_res", "right": "nave_res_3", "message": "Ruby multiplication matched native Nλvescript multiplication." },
+
+    { "op": "log", "message": "--- Test 4: Bash Uppercase ---" },
+    { "op": "polyglot_eval", "lang": "bash", "code": "str='omnicode'; result=\"\\\"${str^^}\\\"\"", "return_var": "sh_res" },
+    { "op": "set", "var": "b_arg1", "value": "omnicode" },
+    { "op": "native_op", "operator": "uppercase", "args": ["b_arg1"], "return_var": "nave_res_4" },
+    { "op": "assert_eq", "left": "sh_res", "right": "nave_res_4", "message": "Bash uppercase matched native Nλvescript uppercase." },
+
+    { "op": "log", "message": "--- Test 5: Perl Array Reverse ---" },
+    { "op": "polyglot_eval", "lang": "perl", "code": "my @arr = (1, 2, 3, 4); my @rev = reverse @arr; $result = \\@rev;", "return_var": "pl_res" },
+    { "op": "set", "var": "p_arg1", "value": [1, 2, 3, 4] },
+    { "op": "native_op", "operator": "reverse", "args": ["p_arg1"], "return_var": "nave_res_5" },
+    { "op": "assert_eq", "left": "pl_res", "right": "nave_res_5", "message": "Perl array reverse matched native Nλvescript array reverse." }
+  ]
+}

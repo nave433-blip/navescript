@@ -1,0 +1,111 @@
+{
+  "version": "0.3.0",
+  "module": "polyglot_verify",
+  "world": "cli",
+  "steps": [
+    {
+      "op": "log",
+      "message": "1. [Python] Origin Request -> Nave -> Origin Check"
+    },
+    {
+      "op": "polyglot_eval",
+      "lang": "python",
+      "return_var": "py_out",
+      "code": "result = {'req': 'calculate_sum', 'data': [10, 20, 30]}"
+    },
+    { "op": "answer", "var": "py_out" },
+    {
+      "op": "polyglot_eval",
+      "lang": "python",
+      "input_var": "py_out",
+      "return_var": "py_check",
+      "code": "expected = 60\nactual = sum(input_data['data'])\nresult = {'valid': actual == expected, 'actual': actual, 'lang': 'Python'}"
+    },
+    { "op": "answer", "var": "py_check" },
+
+    {
+      "op": "log",
+      "message": "2. [JavaScript] Origin Request -> Nave -> Origin Check"
+    },
+    {
+      "op": "polyglot_eval",
+      "lang": "javascript",
+      "return_var": "js_out",
+      "code": "result = {req: 'concat_string', data: ['hello', ' ', 'world']};"
+    },
+    { "op": "answer", "var": "js_out" },
+    {
+      "op": "polyglot_eval",
+      "lang": "javascript",
+      "input_var": "js_out",
+      "return_var": "js_check",
+      "code": "const actual = input_data.data.join('');\nconst expected = 'hello world';\nresult = {valid: actual === expected, actual: actual, lang: 'JavaScript'};"
+    },
+    { "op": "answer", "var": "js_check" },
+
+    {
+      "op": "log",
+      "message": "3. [Ruby] Origin Request -> Nave -> Origin Check"
+    },
+    {
+      "op": "polyglot_eval",
+      "lang": "ruby",
+      "return_var": "rb_out",
+      "code": "result = {'req' => 'multiply', 'data' => [5, 4]}"
+    },
+    { "op": "answer", "var": "rb_out" },
+    {
+      "op": "polyglot_eval",
+      "lang": "ruby",
+      "input_var": "rb_out",
+      "return_var": "rb_check",
+      "code": "actual = input_data['data'].reduce(1, :*)\nexpected = 20\nresult = {'valid' => actual == expected, 'actual' => actual, 'lang' => 'Ruby'}"
+    },
+    { "op": "answer", "var": "rb_check" },
+
+    {
+      "op": "log",
+      "message": "4. [Bash] Origin Request -> Nave -> Origin Check"
+    },
+    {
+      "op": "polyglot_eval",
+      "lang": "bash",
+      "return_var": "bash_out",
+      "code": "result='{\"req\": \"get_greeting\", \"data\": \"NaveOS\"}'"
+    },
+    { "op": "answer", "var": "bash_out" },
+    {
+      "op": "polyglot_eval",
+      "lang": "bash",
+      "input_var": "bash_out",
+      "return_var": "bash_check",
+      "code": "actual=$(echo $input_data | sed 's/.*\"data\": *\"\\([^\"]*\\)\".*/\\1/')\nif [ \"$actual\" = \"NaveOS\" ]; then valid=\"true\"; else valid=\"false\"; fi\nresult=\"{\\\"valid\\\": $valid, \\\"actual\\\": \\\"$actual\\\", \\\"lang\\\": \\\"Bash\\\"}\""
+    },
+    { "op": "answer", "var": "bash_check" },
+
+    {
+      "op": "log",
+      "message": "5. [Perl] Origin Request -> Nave -> Origin Check"
+    },
+    {
+      "op": "polyglot_eval",
+      "lang": "perl",
+      "return_var": "pl_out",
+      "code": "$result = { req => 'reverse_array', data => [1, 2, 3] };"
+    },
+    { "op": "answer", "var": "pl_out" },
+    {
+      "op": "polyglot_eval",
+      "lang": "perl",
+      "input_var": "pl_out",
+      "return_var": "pl_check",
+      "code": "my @reversed = reverse @{$input_data->{data}};\nmy $valid = ($reversed[0] == 3 && $reversed[2] == 1) ? \\1 : \\0;\n$result = { valid => $valid, actual => \\@reversed, lang => 'Perl' };"
+    },
+    { "op": "answer", "var": "pl_check" },
+    
+    {
+      "op": "log",
+      "message": "Verification completed across 5 languages."
+    }
+  ]
+}
