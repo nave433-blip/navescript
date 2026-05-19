@@ -3,6 +3,7 @@ mod ir;
 mod compiler;
 mod runtime;
 mod polyglot;
+mod plugin;
 
 use clap::{Parser, Subcommand};
 use anyhow::Result;
@@ -10,7 +11,7 @@ use std::fs;
 
 #[derive(Parser)]
 #[command(name = "nλvescript")]
-#[command(author = "Nave")]
+#[command(author = "Evan Shipley")]
 #[command(version = "0.3.0")]
 #[command(about = "The Nλvescript Universal Polyglot Language & Runtime", long_about = None)]
 struct Cli {
@@ -34,6 +35,8 @@ enum Commands {
     },
     /// Show current polyglot bridge status
     Status,
+    /// List available plugins
+    Plugins,
 }
 
 fn main() -> Result<()> {
@@ -44,7 +47,7 @@ fn main() -> Result<()> {
             let source = fs::read_to_string(&file)?;
             let prog = parser::parse(&source)?;
             let ir = ir::NSIr::from_program(&prog);
-            
+
             let runtime = runtime::NaveRuntime::new()?;
             runtime.interpret_ir(&ir)?;
         }
@@ -55,6 +58,10 @@ fn main() -> Result<()> {
         }
         Commands::Status => {
             polyglot::show_status()?;
+        }
+        Commands::Plugins => {
+            let manager = plugin::PluginManager::new("plugins");
+            manager.discover();
         }
     }
 
