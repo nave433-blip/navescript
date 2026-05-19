@@ -1,17 +1,37 @@
 {
-  "version": "0.2",
-  "name": "hello_world",
-  "module": "demo",
-  "intent": "simple computation with error handling",
-  "resources": {
-    "target": "auto",
-    "parallel": false
-  },
+  "version": "0.3.0",
+  "module": "hello_world",
+  "world": "cli",
+  "resources": [
+    {
+      "name": "target",
+      "ownership": "owned"
+    }
+  ],
   "steps": [
     {
-      "op": "add",
-      "a": "5",
-      "b": "37"
+      "op": "log",
+      "message": "Hello from NaveScript!"
+    },
+    {
+      "op": "set",
+      "var": "a",
+      "value": 5
+    },
+    {
+      "op": "set",
+      "var": "b",
+      "value": 37
+    },
+    {
+      "op": "native_op",
+      "operator": "add",
+      "args": ["a", "b"],
+      "return_var": "result"
+    },
+    {
+      "op": "answer",
+      "var": "result"
     }
   ]
 }

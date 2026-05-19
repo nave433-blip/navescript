@@ -87,3 +87,33 @@ impl CraneliftBackend {
         Ok(obj.emit()?)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cranelift_backend_basic() {
+        let mut backend = CraneliftBackend::new().unwrap();
+        let ir = NSIr {
+            module_name: "test_cranelift".to_string(),
+            world: "cli".to_string(),
+            imports: vec![],
+            requirements: vec![],
+            resources: vec![],
+            body: vec![
+                Instruction::LOAD { reg: 0, addr: 10 },
+                Instruction::LOAD { reg: 1, addr: 20 },
+                Instruction::ADD { dest: 2, src1: 0, src2: 1 },
+                Instruction::RET { reg: 2 },
+            ],
+        };
+
+        // Should compile correctly without panicking
+        backend.compile_ir("main", &ir).unwrap();
+        let binary = backend.finish().unwrap();
+        
+        // Output should have some bytes representing the mach-o/elf/etc object
+        assert!(binary.len() > 0);
+    }
+}

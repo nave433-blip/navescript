@@ -29,3 +29,25 @@ impl Assembler {
         Ok(wat)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_assemble_basic() {
+        let instructions = vec![
+            Instruction::LOAD { reg: 0, addr: 100 },
+            Instruction::LOAD { reg: 1, addr: 104 },
+            Instruction::ADD { dest: 2, src1: 0, src2: 1 },
+            Instruction::RET { reg: 2 },
+        ];
+
+        let wat = Assembler::assemble(&instructions).unwrap();
+        assert!(wat.contains("local.get $100"));
+        assert!(wat.contains("i32.load"));
+        assert!(wat.contains("local.set $0"));
+        assert!(wat.contains("i32.add"));
+        assert!(wat.contains("return"));
+    }
+}

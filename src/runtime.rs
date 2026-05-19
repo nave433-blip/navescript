@@ -116,3 +116,48 @@ impl NaveRuntime {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_runtime_native_op_add() {
+        let rt = NaveRuntime::new().unwrap();
+        let ir = NSIr {
+            module_name: "test_runtime".to_string(),
+            world: "cli".to_string(),
+            imports: vec![],
+            requirements: vec![],
+            resources: vec![],
+            body: vec![
+                Instruction::SetVar { var: "v1".to_string(), value: Value::from(10) },
+                Instruction::SetVar { var: "v2".to_string(), value: Value::from(32) },
+                Instruction::NativeOp { op: "add".to_string(), args: vec!["v1".to_string(), "v2".to_string()], return_var: "res".to_string() },
+                Instruction::SetVar { var: "expected".to_string(), value: Value::from(42) },
+                Instruction::AssertEq { left_var: "res".to_string(), right_var: "expected".to_string(), message: "Add works".to_string() }
+            ],
+        };
+        assert!(rt.interpret_ir(&ir).is_ok());
+    }
+
+    #[test]
+    fn test_runtime_native_op_concat() {
+        let rt = NaveRuntime::new().unwrap();
+        let ir = NSIr {
+            module_name: "test_runtime".to_string(),
+            world: "cli".to_string(),
+            imports: vec![],
+            requirements: vec![],
+            resources: vec![],
+            body: vec![
+                Instruction::SetVar { var: "v1".to_string(), value: Value::from("hello ") },
+                Instruction::SetVar { var: "v2".to_string(), value: Value::from("world") },
+                Instruction::NativeOp { op: "concat".to_string(), args: vec!["v1".to_string(), "v2".to_string()], return_var: "res".to_string() },
+                Instruction::SetVar { var: "expected".to_string(), value: Value::from("hello world") },
+                Instruction::AssertEq { left_var: "res".to_string(), right_var: "expected".to_string(), message: "Concat works".to_string() }
+            ],
+        };
+        assert!(rt.interpret_ir(&ir).is_ok());
+    }
+}

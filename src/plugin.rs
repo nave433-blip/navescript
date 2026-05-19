@@ -32,3 +32,40 @@ pub struct NavePluginAPI {
     pub execute: extern "C" fn(*const i8) -> *const i8,
     pub get_version: extern "C" fn() -> *const i8,
 }
+
+impl NavePluginAPI {
+    // Basic implementation just to avoid dead code and ensure it can be constructed
+    pub fn new(
+        name: *const i8,
+        execute: extern "C" fn(*const i8) -> *const i8,
+        get_version: extern "C" fn() -> *const i8,
+    ) -> Self {
+        Self {
+            name,
+            execute,
+            get_version,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ptr;
+
+    extern "C" fn dummy_execute(_input: *const i8) -> *const i8 { ptr::null() }
+    extern "C" fn dummy_version() -> *const i8 { ptr::null() }
+
+    #[test]
+    fn test_plugin_api() {
+        let api = NavePluginAPI::new(ptr::null(), dummy_execute, dummy_version);
+        assert!(api.name.is_null());
+    }
+
+    #[test]
+    fn test_plugin_manager() {
+        let manager = PluginManager::new("plugins");
+        let plugins = manager.discover();
+        assert_eq!(plugins.len(), 0);
+    }
+}

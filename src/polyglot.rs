@@ -93,3 +93,50 @@ impl PolyglotBridge {
 pub fn show_status() -> Result<()> {
     PolyglotBridge::new()?.show_status()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_polyglot_python_basic() {
+        let bridge = PolyglotBridge::new().unwrap();
+        let code = "result = 2 + 2";
+        let res = bridge.eval_and_transmute("python", code, None).unwrap();
+        assert_eq!(res, Value::from(4));
+    }
+
+    #[test]
+    fn test_polyglot_js_basic() {
+        let bridge = PolyglotBridge::new().unwrap();
+        let code = "result = 'hello' + ' world';";
+        let res = bridge.eval_and_transmute("javascript", code, None).unwrap();
+        assert_eq!(res, Value::from("hello world"));
+    }
+
+    #[test]
+    fn test_polyglot_ruby_basic() {
+        let bridge = PolyglotBridge::new().unwrap();
+        let code = "result = [1, 2, 3]";
+        let res = bridge.eval_and_transmute("ruby", code, None).unwrap();
+        let arr = res.as_array().unwrap();
+        assert_eq!(arr.len(), 3);
+        assert_eq!(arr[0], Value::from(1));
+    }
+
+    #[test]
+    fn test_polyglot_bash_basic() {
+        let bridge = PolyglotBridge::new().unwrap();
+        let code = "result='\"success\"'"; // Bash needs to output valid JSON for the transmuter
+        let res = bridge.eval_and_transmute("bash", code, None).unwrap();
+        assert_eq!(res, Value::from("success"));
+    }
+
+    #[test]
+    fn test_polyglot_unsupported_language() {
+        let bridge = PolyglotBridge::new().unwrap();
+        let code = "result = 1";
+        let res = bridge.eval_and_transmute("unknown_lang", code, None);
+        assert!(res.is_err());
+    }
+}

@@ -1,13 +1,9 @@
-mod parser;
-mod ir;
-mod compiler;
-mod runtime;
-mod polyglot;
-mod plugin;
-mod nasm;
-mod nasi;
-mod ffi;
-mod cranelift_backend;
+use navescript::parser;
+use navescript::ir;
+use navescript::compiler;
+use navescript::runtime;
+use navescript::polyglot;
+use navescript::plugin;
 
 use clap::{Parser, Subcommand};
 use anyhow::Result;
