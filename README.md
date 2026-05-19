@@ -4,7 +4,20 @@
 
 A universal, polyglot coding language and interpreter built for performance and portability. Nλvescript is the "Universal Omni-Language," designed to bridge multiple languages, capabilities, and hardware targets under a single, highly-optimized runtime.
 
-## 🚀 Core Features (v0.3.0)
+## 🌍 Code Translation & Interop
+
+Nλvescript features a unique **Polyglot Transmutation Engine** that allows it to translate, execute, and verify code from multiple languages:
+
+- **Supported Languages**: Python, JavaScript, Ruby, Bash, Perl.
+- **Transmutation Loop**:
+    1. **Translate**: Accepts foreign language source code.
+    2. **Execute**: Runs foreign code in a sandboxed environment.
+    3. **Transmute**: Converts the foreign output/state into Nλvescript's native JSON representation.
+    4. **Verify**: Runs native Nλvescript operations (addition, string manipulation, array reversal) against the foreign output to ensure semantic correctness.
+    5. **Assert**: Performs rigorous equality checks (Assertion engine) to guarantee the translation matches the origin behavior.
+
+This cyclic verification loop ensures that Nλvescript-translated code functions exactly as the origin language intended.
+
 
 - **WASI 0.2 (Preview 2)**: Built on the WebAssembly Component Model for modern, composable binaries.
 - **Component Model**: True "LEGO brick" modularity with rich, language-agnostic types via WIT.
