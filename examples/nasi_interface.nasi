@@ -1,0 +1,22 @@
+// NASI (Nλvescript System Interface)
+// Native, capability-based interface for Nλvescript modules
+// Mimics WASI but fully self-hosted within the Nλvescript Runtime.
+
+interface file_system {
+    // Capability-based file operations
+    fn open(path: string, mode: i32) -> result<u32, error>;
+    fn read(fd: u32, len: u32) -> result<[]byte, error>;
+    fn write(fd: u32, data: []byte) -> result<u32, error>;
+    fn close(fd: u32) -> result<void, error>;
+}
+
+interface system_clock {
+    fn now() -> u64;
+    fn sleep(ms: u64) -> void;
+}
+
+interface network_io {
+    fn connect(host: string, port: u16) -> result<u32, error>;
+    fn send(socket: u32, data: []byte) -> result<u32, error>;
+    fn recv(socket: u32, len: u32) -> result<[]byte, error>;
+}
