@@ -43,6 +43,9 @@ pub fn compile(ir: &NSIr) -> Result<Vec<u8>> {
             Instruction::AssertEq { left_var, right_var, .. } => {
                 wat.push_str(&format!("      ;; assert: {} == {}\n", left_var, right_var));
             }
+            Instruction::LOAD { .. } | Instruction::STORE { .. } | Instruction::ADD { .. } | Instruction::RET { .. } | Instruction::SYSCALL { .. } => {
+                 wat.push_str("      ;; nasm instruction\n");
+            }
         }
     }
     

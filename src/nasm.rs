@@ -1,25 +1,31 @@
-// NASM Verifier: Ensures memory and control-flow safety at load time
-pub struct NasmVerifier;
+// navescript/src/nasm.rs
+use crate::ir::Instruction;
+use anyhow::Result;
 
-impl NasmVerifier {
-    pub fn verify(code: &[Instruction]) -> Result<(), String> {
-        println!("🛡️ Verifying NASM code for safety...");
-        for instr in code {
+pub struct Assembler;
+
+impl Assembler {
+    // Translates NASM-style instructions into WASM bytecode
+    // For this POC, we generate WebAssembly Text (WAT) instructions
+    pub fn assemble(instructions: &[Instruction]) -> Result<String> {
+        let mut wat = String::new();
+        for instr in instructions {
             match instr {
-                // Example: Check if LOAD/STORE is within bounds or guarded by a capability
-                _ => continue,
+                Instruction::LOAD { reg, addr } => {
+                    wat.push_str(&format!("    local.get ${}\n    i32.const {}\n    i32.load\n    local.set ${}\n", addr, addr, reg));
+                }
+                Instruction::STORE { reg, addr } => {
+                    wat.push_str(&format!("    local.get ${}\n    i32.const {}\n    i32.store\n", reg, addr));
+                }
+                Instruction::ADD { dest, src1, src2 } => {
+                    wat.push_str(&format!("    local.get ${}\n    local.get ${}\n    i32.add\n    local.set ${}\n", src1, src2, dest));
+                }
+                Instruction::RET { reg } => {
+                    wat.push_str(&format!("    local.get ${}\n    return\n", reg));
+                }
+                _ => {}
             }
         }
-        Ok(())
+        Ok(wat)
     }
-}
-
-// Updated Instruction set for VM execution
-#[derive(Debug, Clone)]
-pub enum Instruction {
-    LOAD { reg: u8, addr: u32 },
-    STORE { reg: u8, addr: u32 },
-    ADD { dest: u8, src1: u8, src2: u8 },
-    RET { reg: u8 },
-    SYSCALL { id: u32, args: Vec<u8> }, // NASI Syscall trigger
 }

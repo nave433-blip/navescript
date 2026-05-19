@@ -78,6 +78,11 @@ pub enum Instruction {
         right_var: String,
         message: String,
     },
+    LOAD { reg: u8, addr: u32 },
+    STORE { reg: u8, addr: u32 },
+    ADD { dest: u8, src1: u8, src2: u8 },
+    RET { reg: u8 },
+    SYSCALL { id: u32, args: Vec<u8> },
 }
 
 impl NSIr {

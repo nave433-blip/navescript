@@ -1,0 +1,33 @@
+package nave:nasm_test;
+
+interface logging {
+    log: func(level: string, message: string);
+    error: func(message: string, code: u32);
+}
+
+interface error-handling {
+    resource error {
+        message: func() -> string;
+        code: func() -> u32;
+        drop: func();  // Explicit ownership drop
+    }
+    try-catch: func<T>(body: func() -> result<T, borrow<error>>) -> result<T, borrow<error>>;
+    new-error: func(message: string, code: u32) -> own<error>;
+}
+
+interface resources {
+    query-capability: func(name: string) -> option<string>;
+}
+
+world navescript-world {
+    export logging;
+    export error-handling;
+    export resources;
+
+    resource task {
+        run: func() -> result<string, own<error>>;
+    }
+    import wasi:cli/environment@0.2.0;
+    import wasi:filesystem/types@0.2.0;
+    import wasi:filesystem/preopens@0.2.0;
+}

@@ -4,6 +4,9 @@ pub mod compiler;
 pub mod runtime;
 pub mod polyglot;
 pub mod plugin;
+pub mod nasm;
+pub mod nasi;
+pub mod ffi;
 
 pub use parser::NaveProgram;
 pub use runtime::NaveRuntime;
