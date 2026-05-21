@@ -1,0 +1,20 @@
+{
+  "version": "0.3.0",
+  "module": "nasi_security_test",
+  "world": "cli",
+  "steps": [
+    {
+      "op": "log",
+      "message": "Testing NASI capability-based system interface"
+    },
+    {
+      "op": "nasm_exec",
+      "code": "SYSCALL 1 Hello from NASI!\nSYSCALL 2\nRET R0",
+      "return_var": "nasi_out"
+    },
+    {
+      "op": "answer",
+      "var": "nasi_out"
+    }
+  ]
+}

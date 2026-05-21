@@ -1,7 +1,7 @@
 # Nλvescript (NaveScript)
 
 **Author:** Evan Shipley  
-**Status:** Production-Hardened Polyglot Runtime (v0.3.0)  
+**Status:** Production-Hardened Polyglot Runtime (v0.3.2)  
 
 Nλvescript is the "Universal Omni-Language," a high-performance, polyglot coding language and interpreter designed to bridge multiple languages, capabilities, and hardware targets under a single, highly-optimized, and secure runtime.
 
@@ -19,6 +19,8 @@ Traditional interop tools like `cgo` (Go), `PyO3` (Python-Rust), or `rust-cxx` a
 
 ### The Nλvescript Advantage:
 - **Unified IR (Intermediate Representation)**: Compiles foreign code into a single, high-performance IR, eliminating language-specific FFI wrappers.
+- **Interactive Stdin**: Native `input` operation for real-time user interaction.
+- **Complex Control Flow**: Production-ready `if`, `for_each`, and `try/catch` logic.
 - **WASI 0.2 Component Model**: Uses WIT (WebAssembly Interface Types) for secure, language-agnostic modularity.
 - **Polyglot Transmutation**: Seamlessly converts foreign data structures into native Nλvescript types.
 - **Hardened Security**: Includes a load-time **NASM Verifier** for memory safety and a **NASI Capability Host** for granular system-call security.
@@ -38,10 +40,16 @@ Nλvescript features a unique **Polyglot Transmutation Engine** that allows it t
 
 ---
 
-## 🚀 Core Features (v0.3.0)
+## 🚀 Core Features (v0.3.2)
 
 - **NASM (Nλvescript Assembly)**: RISC-like, human-readable assembly format for low-level systems programming.
 - **NASI (Nλvescript System Interface)**: Self-hosted, capability-based interface for accessing OS resources securely.
+- **Native Operations**: 
+    - `http_get`, `http_post`: Native high-performance networking.
+    - `file_read`, `file_write`: Capability-guarded I/O.
+    - `shell_exec`: Controlled OS interaction.
+    - `input`: Interactive command-line support.
+    - `json_parse`: Native transmutation of string-data to IR types.
 - **NVsodide**: Browser-resident WASM runtime with JS-bridge security negotiation.
 - **Omni-Bridge SDK**: Standardized FFI layer (`include/nave_api.h`) for embedding in **Rust, Go, Swift, Java, C++, and Python**.
 

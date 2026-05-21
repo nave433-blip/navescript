@@ -42,17 +42,17 @@ impl CraneliftBackend {
         let mut terminated = false;
         for instr in &ir.body {
             match instr {
-                Instruction::LOAD { reg, addr } => {
+                Instruction::Load { reg, addr } => {
                     let val = builder.ins().iconst(types::I32, *addr as i64);
                     regs.insert(*reg, val);
                 }
-                Instruction::ADD { dest, src1, src2 } => {
+                Instruction::Add { dest, src1, src2 } => {
                     if let (Some(&v1), Some(&v2)) = (regs.get(src1), regs.get(src2)) {
                         let res = builder.ins().iadd(v1, v2);
                         regs.insert(*dest, res);
                     }
                 }
-                Instruction::RET { reg } => {
+                Instruction::Ret { reg } => {
                     if let Some(&v) = regs.get(reg) {
                         builder.ins().return_(&[v]);
                         terminated = true;
@@ -102,10 +102,10 @@ mod tests {
             requirements: vec![],
             resources: vec![],
             body: vec![
-                Instruction::LOAD { reg: 0, addr: 10 },
-                Instruction::LOAD { reg: 1, addr: 20 },
-                Instruction::ADD { dest: 2, src1: 0, src2: 1 },
-                Instruction::RET { reg: 2 },
+                Instruction::Load { reg: 0, addr: 10 },
+                Instruction::Load { reg: 1, addr: 20 },
+                Instruction::Add { dest: 2, src1: 0, src2: 1 },
+                Instruction::Ret { reg: 2 },
             ],
         };
 

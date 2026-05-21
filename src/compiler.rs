@@ -59,11 +59,24 @@ pub fn compile_to_wat(ir: &NSIr) -> Result<String> {
             crate::ir::Instruction::NativeOp { op, return_var, .. } => {
                 wat.push_str(&format!("      ;; native op: {} -> {}\n", op, return_var));
             }
-            crate::ir::Instruction::AssertEq { left_var, right_var, .. } => {
-                wat.push_str(&format!("      ;; assert: {} == {}\n", left_var, right_var));
+            crate::ir::Instruction::Load { reg, addr } => {
+                wat.push_str(&format!("      ;; load: R{} from {}\n", reg, addr));
             }
+            crate::ir::Instruction::LoadImm { reg, value } => {
+                wat.push_str(&format!("      ;; load_imm: R{} = {}\n", reg, value));
+            }
+            crate::ir::Instruction::Store { reg, addr } => {
+                wat.push_str(&format!("      ;; store: R{} to {}\n", reg, addr));
+            }
+            crate::ir::Instruction::Add { dest, src1, src2 } => {
+                wat.push_str(&format!("      ;; add: R{} = R{} + R{}\n", dest, src1, src2));
+            }
+            crate::ir::Instruction::Ret { reg } => {
+                wat.push_str(&format!("      ;; ret: R{}\n", reg));
+            }
+
             _ => {
-                wat.push_str("      ;; nasm instruction\n");
+                wat.push_str("      ;; other instruction\n");
             }
         }
     }

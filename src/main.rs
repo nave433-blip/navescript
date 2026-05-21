@@ -48,8 +48,8 @@ fn main() -> Result<()> {
             let prog = parser::parse(&source)?;
             let ir = ir::NSIr::from_program(&prog);
 
-            let runtime = runtime::NaveRuntime::new()?;
-            runtime.interpret_ir(&ir)?;
+            let mut runtime = runtime::NaveRuntime::new()?;
+            tokio::runtime::Runtime::new()?.block_on(runtime.interpret_ir(&ir))?;
         }
         Commands::Compile { file, output } => {
             let source = fs::read_to_string(&file)?;

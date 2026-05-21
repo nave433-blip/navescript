@@ -1,0 +1,90 @@
+{
+  "version": "0.3.5",
+  "module": "jarvis_wasi_preview2",
+  "world": "wasi:cli",
+  "steps": [
+    {
+      "op": "log",
+      "message": "JARVIS [WASI Preview 2 Component Host] v0.3.5 Online."
+    },
+    {
+      "op": "set",
+      "var": "config",
+      "value": {
+        "prompt": "JARVIS CLI >>> ",
+        "plugin_wasm": "plugins/crypto_engine.wasm",
+        "export_func": "wasi:crypto/hash.hash-data",
+        "api_url": "https://api.github.com/repos/nave433-blip/navescript"
+      }
+    },
+    {
+      "op": "input",
+      "prompt": "config.prompt",
+      "return_var": "user_command"
+    },
+    {
+      "op": "log",
+      "message": "1. Invoking WASI Preview 2 Component Model (`component_call`)..."
+    },
+    {
+      "op": "component_call",
+      "component": "config.plugin_wasm",
+      "func": "config.export_func",
+      "args": "user_command",
+      "return_var": "crypto_result"
+    },
+    {
+      "op": "if",
+      "condition": "crypto_result_err",
+      "then": [
+        { "op": "log", "message": "🚨 Component Call Failed." }
+      ],
+      "else": [
+        { "op": "log", "message": "✅ Component Executed Successfully." },
+        { "op": "answer", "var": "crypto_result" }
+      ]
+    },
+    {
+      "op": "log",
+      "message": "2. Testing wasi:http standard networking..."
+    },
+    {
+      "op": "http_get",
+      "url": "config.api_url",
+      "return_var": "api_data"
+    },
+    {
+      "op": "if",
+      "condition": "api_data_err",
+      "then": [
+        { "op": "log", "message": "🚨 wasi:http request returned a NASI error code." },
+        { "op": "answer", "var": "api_data_err" }
+      ],
+      "else": [
+        { "op": "log", "message": "✅ wasi:http response received." }
+      ]
+    },
+    {
+      "op": "log",
+      "message": "3. Testing wasi:filesystem with explicit WASI NasiError..."
+    },
+    {
+      "op": "file_read",
+      "path": "non_existent_wasi_file.txt",
+      "return_var": "ghost_data"
+    },
+    {
+      "op": "if",
+      "condition": "ghost_data_err",
+      "then": [
+        { "op": "log", "message": "✅ Correctly caught wasi:filesystem error." },
+        { "op": "log", "message": "Error code mapped to NasiError::Noent (18)" },
+        { "op": "answer", "var": "ghost_data_err" }
+      ]
+    },
+    {
+      "op": "log",
+      "message": "JARVIS: All WASI 0.2 worlds and components verified. System offline."
+    }
+  ]
+}

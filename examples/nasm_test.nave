@@ -1,0 +1,20 @@
+{
+  "version": "0.3.0",
+  "module": "nasm_math",
+  "world": "cli",
+  "steps": [
+    {
+      "op": "log",
+      "message": "Testing NASM assembly capabilities with memory initialization"
+    },
+    {
+      "op": "nasm_exec",
+      "code": "LI R0, 42\nSTORE R0, 0\nLI R1, 8\nSTORE R1, 4\nLOAD R2, 0\nLOAD R3, 4\nADD R2, R3\nRET R2",
+      "return_var": "nasm_result"
+    },
+    {
+      "op": "answer",
+      "var": "nasm_result"
+    }
+  ]
+}

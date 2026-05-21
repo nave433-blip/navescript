@@ -14,7 +14,7 @@ pub extern "C" fn nave_init() -> *mut NaveRuntime {
 
 #[no_mangle]
 pub extern "C" fn nave_run(ctx: *mut NaveRuntime, module_path: *const c_char) -> i32 {
-    let rt = unsafe { &*ctx };
+    let rt = unsafe { &mut *ctx };
     let c_str = unsafe { CStr::from_ptr(module_path) };
     let path = match c_str.to_str() {
         Ok(s) => s,
@@ -35,7 +35,7 @@ pub extern "C" fn nave_run(ctx: *mut NaveRuntime, module_path: *const c_char) ->
 
     let ir = ir::NSIr::from_program(&prog);
 
-    match rt.interpret_ir(&ir) {
+    match tokio::runtime::Runtime::new().unwrap().block_on(rt.interpret_ir(&ir)) {
         Ok(_) => 0,
         Err(_) => -4,
     }

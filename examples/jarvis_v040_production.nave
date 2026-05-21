@@ -1,0 +1,86 @@
+{
+  "version": "0.4.0",
+  "module": "jarvis_v040_production",
+  "world": "wasi:cli",
+  "nit": {
+    "world": "nasi-core",
+    "interfaces": {
+      "core": {
+        "functions": {
+          "run": { "params": ["string"], "results": ["string"] }
+        }
+      }
+    }
+  },
+  "capabilities": ["http", "fs", "random"],
+  "imports": ["nasi:core"],
+  "steps": [
+    {
+      "id": "init",
+      "op": "log",
+      "params": { "message": "🚀 JARVIS Nλvescript v0.4.0 Production Platform online" }
+    },
+    { "op": "set", "var": "user_cmd", "value": "null" },
+    { "op": "set", "var": "user_cmd_err", "value": 0 },
+    { "op": "set", "var": "comp_res", "value": "null" },
+    { "op": "set", "var": "comp_res_err", "value": 0 },
+    
+    {
+      "id": "input_step",
+      "op": "input",
+      "params": { "prompt": "JARVIS v0.4.0 >>> " },
+      "returns": "user_cmd"
+    },
+    {
+      "id": "intent_analysis",
+      "op": "polyglot_eval",
+      "lang": "python",
+      "input": "user_cmd",
+      "returns": "intent",
+      "params": {
+        "code": "cmd = input_data.lower()\naction = 'component' if any(w in cmd for w in ['process', 'math', 'hash']) else 'http' if 'repo' in cmd else 'general'\nresult = {'action': action, 'is_complex': action == 'component'}"
+      }
+    },
+    {
+      "id": "dispatch_decision",
+      "op": "if",
+      "params": { "condition": "intent.is_complex" },
+      "then": [
+        { "op": "log", "message": "🧠 Complex intent detected. Routing to specialized NIT component..." },
+        {
+          "op": "component_call",
+          "params": {
+            "component": "plugins/nasi_core.wasm",
+            "func": "nasi:core/run"
+          },
+          "input": "user_cmd",
+          "returns": "comp_res"
+        },
+        { "op": "answer", "params": { "var": "comp_res" } }
+      ],
+      "else": [
+        { "op": "log", "message": "⚡ Simple request. Executing direct wasi:http sync..." },
+        {
+          "op": "http_get",
+          "params": { "url": "https://api.github.com/repos/nave433-blip/navescript" },
+          "returns": "repo_data"
+        },
+        { "op": "answer", "params": { "var": "repo_data" } }
+      ]
+    },
+    {
+      "id": "nasm_audit",
+      "op": "polyglot_eval",
+      "lang": "nasm",
+      "returns": "audit_pulse",
+      "params": {
+        "code": "LI R0, 777\nSYSCALL 1 [NASM]_Audit_Lock_v0.4.0\nRET R0"
+      }
+    },
+    {
+      "op": "log",
+      "params": { "message": "✅ JARVIS v0.4.0 sequence finalized. System nominal." }
+    }
+  ],
+  "exports": ["user_cmd", "intent"]
+}

@@ -1,0 +1,10 @@
+package nasi:core;
+
+interface logging {
+    log: func(msg: string);
+}
+
+world nasi-core {
+    import logging;
+    export run: func(input: string) -> string;
+}

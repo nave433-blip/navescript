@@ -1,0 +1,155 @@
+{
+  "version": "0.4.1",
+  "module": "jarvis_wasi_production_v041",
+  "world": "wasi:cli",
+  "steps": [
+    {
+      "op": "log",
+      "message": "🚀 [Nλve] v0.4.1 Final Production Polish Sequence Starting..."
+    },
+    {
+      "op": "set",
+      "var": "env",
+      "value": {
+        "minimal_wasm": "plugins/minimal.wasm",
+        "missing_wasm": "plugins/missing.wasm",
+        "audit_path": "nasi_prod.audit",
+        "api_url": "https://api.github.com/repos/nave433-blip/navescript"
+      }
+    },
+    {
+      "op": "input",
+      "params": { "prompt": "Enter Final Lock-In Key: " },
+      "returns": "lock_key"
+    },
+    {
+      "op": "log",
+      "message": "1. Verifying real WASM Component Model instantiation..."
+    },
+    {
+      "op": "try",
+      "retry": 1,
+      "body": [
+        {
+          "op": "component_call",
+          "params": {
+            "component": "env.minimal_wasm",
+            "func": "run"
+          },
+          "returns": "wasm_res"
+        },
+        {
+          "op": "answer",
+          "var": "wasm_res"
+        }
+      ],
+      "catch": [
+        {
+          "op": "log",
+          "message": "🚨 Unexpected failure in minimal.wasm! Check binary format."
+        }
+      ]
+    },
+    {
+      "op": "log",
+      "message": "2. Testing deliberate Component failure with pre-initialization safety..."
+    },
+    {
+      "op": "try",
+      "body": [
+        {
+          "op": "component_call",
+          "params": {
+            "component": "env.missing_wasm",
+            "func": "start"
+          },
+          "returns": "missing_res"
+        }
+      ],
+      "catch": [
+        {
+          "op": "log",
+          "message": "✅ missing_res_err properly caught. No crash."
+        },
+        {
+          "op": "answer",
+          "var": "missing_res_err"
+        }
+      ]
+    },
+    {
+      "op": "log",
+      "message": "3. Initializing NASM high-speed security pulse..."
+    },
+    {
+      "op": "nasm_exec",
+      "params": {
+        "code": "LI R0, 100\nLI R1, 200\nADD R2, R0, R1\nSYSCALL 1 [NASM]_Security_Pulse_Success\nRET R2"
+      },
+      "returns": "nasm_pulse"
+    },
+    {
+      "op": "answer",
+      "var": "nasm_pulse"
+    },
+    {
+      "op": "log",
+      "message": "4. Verifying async wasi:http capability..."
+    },
+    {
+      "op": "try",
+      "body": [
+        {
+          "op": "http_get",
+          "params": { "url": "env.api_url" },
+          "returns": "api_data"
+        },
+        {
+          "op": "log",
+          "message": "✅ HTTP response received."
+        }
+      ],
+      "catch": [
+        {
+          "op": "log",
+          "message": "⚠️ wasi:http failure. Continuing with degraded mode."
+        }
+      ]
+    },
+    {
+      "op": "log",
+      "message": "5. Bulletproof wasi:filesystem audit..."
+    },
+    {
+      "op": "try",
+      "body": [
+        {
+          "op": "file_write",
+          "params": {
+            "path": "env.audit_path",
+            "data": "Status: v0.4.1 Production Hardened."
+          }
+        },
+        {
+          "op": "file_read",
+          "params": { "path": "env.audit_path" },
+          "returns": "audit_log"
+        },
+        {
+          "op": "answer",
+          "var": "audit_log"
+        }
+      ],
+      "catch": [
+        {
+          "op": "log",
+          "message": "🚨 Persistence failure!"
+        }
+      ]
+    },
+    {
+      "op": "log",
+      "message": "✨ Production Lock-In complete. JARVIS systems fully operational."
+    }
+  ]
+}

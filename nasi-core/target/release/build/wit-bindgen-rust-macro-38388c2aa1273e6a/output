@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=build.rs
+cargo:rustc-env=DEBUG_OUTPUT_DIR=/Users/evanshipley-courter/navescript/nasi-core/target/release/build/wit-bindgen-rust-macro-38388c2aa1273e6a/out

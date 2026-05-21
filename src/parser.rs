@@ -3,19 +3,44 @@ use anyhow::Result;
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NitFunction {
+    pub params: Vec<String>,
+    pub results: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NitInterface {
+    pub functions: HashMap<String, NitFunction>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NitWorld {
+    pub world: String,
+    pub interfaces: HashMap<String, NitInterface>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NaveProgram {
     pub version: String,
     pub module: String,
-    pub world: Option<String>, // New: WASI Preview 2 World (e.g., "cli", "http")
-    pub imports: Option<HashMap<String, String>>,
-    pub capabilities: Option<Vec<String>>, // Granular capabilities (e.g., "filesystem/read")
+    pub world: Option<String>,
+    pub nit: Option<NitWorld>,
+    pub imports: Option<Vec<String>>,
+    pub capabilities: Option<Vec<String>>,
     pub resources: Option<Vec<serde_json::Value>>,
     pub steps: Vec<Step>,
+    pub exports: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Step {
+    pub id: Option<String>,
     pub op: String,
+    pub lang: Option<String>,
+    pub input: Option<String>,
+    pub returns: Option<String>,
+    pub on_error: Option<String>,
+    pub retry: Option<u32>,
     #[serde(flatten)]
     pub params: serde_json::Value,
 }
