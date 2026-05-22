@@ -1,0 +1,11 @@
+package nave:auth
+
+interface jwt {
+    record claims {
+        sub: string,
+        exp: u64,
+    }
+
+    encode: func(claims: claims, secret: string) -> result<string, string>;
+    decode: func(token: string, secret: string) -> result<claims, string>;
+}

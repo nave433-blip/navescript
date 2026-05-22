@@ -1,0 +1,9 @@
+package nave:usb
+
+interface client {
+    resource device {
+        constructor(vendor_id: u16, product_id: u16);
+        transfer: func(endpoint: u8, data: list<u8>) -> result<list<u8>, string>;
+        close: func() -> result<_, string>;
+    }
+}

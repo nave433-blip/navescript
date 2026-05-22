@@ -1,0 +1,9 @@
+package nave:queue
+
+interface client {
+    resource connection {
+        constructor(url: string);
+        publish: func(queue: string, payload: list<u8>) -> result<_, string>;
+        consume: func(queue: string) -> result<list<u8>, string>;
+    }
+}

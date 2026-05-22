@@ -1,0 +1,10 @@
+package nave:websocket
+
+interface client {
+    resource socket {
+        constructor(url: string);
+        send: func(message: string) -> result<_, string>;
+        receive: func() -> result<string, string>;
+        close: func() -> result<_, string>;
+    }
+}

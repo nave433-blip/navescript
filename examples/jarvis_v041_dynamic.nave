@@ -1,0 +1,65 @@
+{
+  "version": "0.4.1",
+  "module": "jarvis_dynamic_platform",
+  "world": "wasi:cli",
+  "nit": {
+    "world": "nasi-core",
+    "interfaces": {
+      "core": {
+        "functions": {
+          "run": { "params": ["string"], "results": ["string"] }
+        }
+      }
+    }
+  },
+  "capabilities": ["http", "fs", "random"],
+  "imports": ["nasi:core"],
+  "steps": [
+    {
+      "id": "init",
+      "op": "log",
+      "params": { "message": "🚀 JARVIS Nλvescript v0.4.1 Dynamic Platform online" }
+    },
+    { "op": "set", "var": "user_cmd", "value": "null" },
+    { "op": "set", "var": "dynamic_res", "value": "null" },
+    
+    {
+      "id": "input_step",
+      "op": "input",
+      "params": { "prompt": "JARVIS v0.4.1 >>> " },
+      "returns": "user_cmd"
+    },
+    {
+      "id": "intent_analysis",
+      "op": "polyglot_eval",
+      "lang": "python",
+      "input": "user_cmd",
+      "returns": "intent",
+      "params": {
+        "code": "cmd = input_data.lower()\n# Intelligent Optimotor Routing\nif any(w in cmd for w in ['fast', 'math', 'asm']):\n    target = 'nasm'\n    code = 'LI R0, 100\\nLI R1, 200\\nADD R0, R1\\nRET R0'\nelif any(w in cmd for w in ['process', 'hash']):\n    target = 'javascript'\n    code = 'result = \"JS Processing: \" + input_data.toUpperCase()'\nelse:\n    target = 'python'\n    code = 'result = f\"Python processing: {input_data.swapcase()}\"'\n\nresult = {'target_lang': target, 'target_code': code}"
+      }
+    },
+    {
+      "op": "log",
+      "params": { "message": "🧠 Routing task to dynamic runtime..." }
+    },
+    {
+      "id": "dynamic_dispatch",
+      "op": "polyglot_eval",
+      "lang": "intent.target_lang",
+      "input": "user_cmd",
+      "returns": "dynamic_res",
+      "params": {
+        "code": "intent.target_code"
+      }
+    },
+    {
+      "op": "answer",
+      "params": { "var": "dynamic_res" }
+    },
+    {
+      "op": "log",
+      "params": { "message": "✅ JARVIS v0.4.1 Dynamic Routing complete." }
+    }
+  ]
+}

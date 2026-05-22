@@ -1,0 +1,14 @@
+package nave:auth
+
+interface oauth2 {
+    resource client {
+        constructor(
+            client_id: string,
+            client_secret: string,
+            auth_url: string,
+            token_url: string
+        );
+        get_auth_url: func() -> string;
+        exchange_code: func(code: string) -> result<string, string>;
+    }
+}

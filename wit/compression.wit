@@ -1,0 +1,6 @@
+package nave:media
+
+interface compression {
+    compress: func(data: list<u8>) -> result<list<u8>, string>;
+    decompress: func(data: list<u8>) -> result<list<u8>, string>;
+}

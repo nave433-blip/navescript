@@ -1,0 +1,9 @@
+package nave:mongodb
+
+interface client {
+    resource connection {
+        constructor(url: string, db: string);
+        find: func(collection: string, filter: string) -> result<list<string>, string>;
+        insert: func(collection: string, document: string) -> result<string, string>;
+    }
+}

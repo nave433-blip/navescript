@@ -1,0 +1,10 @@
+package nave:postgres
+
+interface client {
+    resource connection {
+        constructor(config: string);
+        execute: func(query: string) -> result<u64, string>;
+        // Simplified query returning a list of rows, where each row is a list of strings
+        query: func(query: string) -> result<list<list<string>>, string>;
+    }
+}

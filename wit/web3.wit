@@ -1,0 +1,6 @@
+package nave:web3
+
+interface ethereum {
+    get_balance: func(address: string) -> result<string, string>;
+    send_transaction: func(to: string, amount: string) -> result<string, string>;
+}

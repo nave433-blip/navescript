@@ -1,0 +1,9 @@
+package nave:spi
+
+interface client {
+    resource connection {
+        constructor(path: string);
+        transfer: func(data: list<u8>) -> result<list<u8>, string>;
+        close: func() -> result<_, string>;
+    }
+}

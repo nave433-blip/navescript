@@ -1,0 +1,6 @@
+package nave:observability
+
+interface metrics {
+    inc_counter: func(name: string, help: string);
+    observe_gauge: func(name: string, help: string, value: f64);
+}

@@ -1,9 +1,9 @@
 [package]
 name = "navescript"
-version = "0.3.2"
+version = "3.0.0"
 edition = "2021"
 authors = ["Evan Shipley"]
-description = "Nλvescript: A Universal Polyglot Language & WASI Runtime"
+description = "Nλvescript v3.0: Universal Polyglot Runtime"
 repository = "https://github.com/naveos/navescript"
 
 [lib]
@@ -19,6 +19,42 @@ tokio = { version = "1", features = ["full"] }
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+rusqlite = "0.31"
+reqwest = { version = "0.12", features = ["json"] }
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+async-trait = "0.1"
+argon2 = "0.5"
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+redis = { version = "0.26", features = ["tokio-comp"] }
+tokio-postgres = "0.7"
+deadpool-postgres = "0.14"
+sqlx = { version = "0.8", features = ["mysql", "runtime-tokio", "tls-rustls"] }
+tonic = "0.12"
+prost = "0.13"
+tokio-serial = "5.4"
+rusb = "0.9"
+hidapi = "2.6"
+i2cdev = "0.6"
+embedded-hal = "1.0"
+spidev = "0.6"
+futures = "0.3"
+futures-util = "0.3"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+opentelemetry = { version = "0.24", features = ["metrics", "trace"] }
+opentelemetry_sdk = { version = "0.24", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.17", features = ["grpc-tonic"] }
+tracing-opentelemetry = "0.25"
+mongodb = "2.8"
+prometheus = "0.13"
+oauth2 = "5.0"
+jsonwebtoken = "9.3"
+image = "0.25"
+hound = "3.5"
+flate2 = "1.0"
+moka = { version = "0.12", features = ["future"] }
+threadpool = "1.8"
+lapin = "2.3"
 
 # WASM Runtime
 wasmtime = { version = "26.0", features = ["component-model", "async"] }
@@ -32,12 +68,27 @@ cranelift-native = "0.110"
 cranelift-object = "0.110"
 target-lexicon = "0.12"
 
+# Security and Analysis
+goblin = "0.8"
+capstone = "0.12"
+pcap = "2.0"
+read-process-memory = "0.1"
+sysinfo = "0.31"
+
 # Utilities
 log = "0.4"
 env_logger = "0.11"
 colored = "2.0"
 rand = "0.8"
+sha2 = "0.10"
+sha3 = "0.10"
+rsa = "0.9"
+hex = "0.4"
 async-recursion = "1.1.1"
+num_cpus = "1.16"
+icu = "1.5"
+icu_locid = "1.5"
+tower-lsp = "0.20"
 
 [dev-dependencies]
 assert_fs = "1.1"

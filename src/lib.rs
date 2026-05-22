@@ -1,3 +1,18 @@
+// pub mod hardware;
+pub mod network;
+pub mod media;
+pub mod ml;
+pub mod observability;
+pub mod drivers;
+pub mod distributed;
+pub mod security;
+pub mod ns_lexer;
+pub mod ns_parser;
+pub mod ns_compiler;
+pub mod stdlib;
+pub mod test;
+pub mod lsp;
+pub mod package;
 pub mod parser;
 pub mod ir;
 pub mod compiler;
@@ -8,6 +23,9 @@ pub mod nasm;
 pub mod nasi;
 pub mod ffi;
 pub mod cranelift_backend;
+pub mod sandbox;
+pub use sandbox::Sandbox;
+pub mod types;
 
 pub use parser::NaveProgram;
 pub use runtime::NaveRuntime;

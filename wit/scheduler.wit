@@ -1,0 +1,8 @@
+package nave:runtime
+
+interface scheduler {
+    resource pool {
+        constructor(size: u32);
+        execute: func(task: string);
+    }
+}

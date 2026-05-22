@@ -1,0 +1,8 @@
+package nave:ml
+
+interface spark {
+    resource job {
+        constructor(script: string);
+        submit: func() -> result<string, string>;
+    }
+}

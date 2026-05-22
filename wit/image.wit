@@ -1,0 +1,10 @@
+package nave:media
+
+interface image {
+    resource processor {
+        constructor(data: list<u8>);
+        resize: func(width: u32, height: u32) -> result<_, string>;
+        rotate: func(degrees: f32) -> result<_, string>;
+        get_data: func() -> list<u8>;
+    }
+}

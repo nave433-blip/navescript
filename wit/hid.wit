@@ -1,0 +1,9 @@
+package nave:hid
+
+interface client {
+    resource device {
+        constructor(vendor_id: u16, product_id: u16);
+        read: func(len: u32) -> result<list<u8>, string>;
+        write: func(data: list<u8>) -> result<_, string>;
+    }
+}

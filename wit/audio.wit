@@ -1,0 +1,9 @@
+package nave:media
+
+interface audio {
+    resource processor {
+        constructor(data: list<u8>);
+        gain: func(factor: f32) -> result<_, string>;
+        get_data: func() -> list<u8>;
+    }
+}

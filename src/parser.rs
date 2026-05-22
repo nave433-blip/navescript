@@ -21,6 +21,7 @@ pub struct NitWorld {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NaveProgram {
+    #[serde(alias = "njson_version")]
     pub version: String,
     pub module: String,
     pub world: Option<String>,
@@ -40,6 +41,7 @@ pub struct Step {
     pub input: Option<String>,
     pub returns: Option<String>,
     pub on_error: Option<String>,
+    pub next: Option<String>, // New: Next step ID to jump to
     pub retry: Option<u32>,
     #[serde(flatten)]
     pub params: serde_json::Value,

@@ -1,0 +1,19 @@
+let x = 0;
+while (x < 5) {
+  log("Loop iteration:");
+  log(x);
+  x = x + 1;   // This now works
+}
+
+fn greet(name) {
+  log("Hello from Nλve,");
+  log(name);
+}
+
+greet("Developer");
+
+polyglot python(x) {
+  result = f"Python saw x as {x}"
+} as py_res;
+
+log(py_res);

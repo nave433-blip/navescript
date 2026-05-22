@@ -1,0 +1,9 @@
+package nave:mysql
+
+interface client {
+    resource connection {
+        constructor(url: string);
+        execute: func(query: string) -> result<u64, string>;
+        query: func(query: string) -> result<list<list<string>>, string>;
+    }
+}

@@ -1,0 +1,8 @@
+package nave:media
+
+interface transcoder {
+    resource process {
+        constructor(command: string);
+        run: func() -> result<string, string>;
+    }
+}

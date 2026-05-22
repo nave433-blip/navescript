@@ -1,0 +1,75 @@
+{
+  "njson_version": "1.0",
+  "module": "jarvis:graph_platform",
+  "world": "wasi:cli",
+  "nit": {
+    "world": "nasi-core",
+    "interfaces": {
+      "core": {
+        "functions": {
+          "run": { "params": ["string"], "results": ["string"] }
+        }
+      }
+    }
+  },
+  "capabilities": ["http", "fs", "random"],
+  "steps": [
+    {
+      "id": "init",
+      "op": "log",
+      "params": { "message": "🚀 JARVIS v1.0 [Step Graph] initialized." },
+      "next": "input_step"
+    },
+    {
+      "id": "input_step",
+      "op": "input",
+      "params": { "prompt": "JARVIS v1.0 >>> " },
+      "returns": "user_cmd",
+      "next": "intent_analysis"
+    },
+    {
+      "id": "intent_analysis",
+      "op": "polyglot_eval",
+      "lang": "python",
+      "input": "user_cmd",
+      "returns": "intent",
+      "params": {
+        "code": "cmd = input_data.lower()\nis_math = 'math' in cmd\nis_exit = 'exit' in cmd\nresult = {'action': 'math' if is_math else 'exit' if is_exit else 'general', 'is_math': is_math, 'is_exit': is_exit}"
+      },
+      "next": "check_exit"
+    },
+    {
+      "id": "check_exit",
+      "op": "if",
+      "params": { "condition": "intent.is_exit" },
+      "then": [
+        { "op": "log", "message": "👋 System shutdown requested." }
+      ],
+      "next": "check_math"
+    },
+    {
+      "id": "check_math",
+      "op": "if",
+      "params": { "condition": "intent.is_math" },
+      "then": [
+        { "op": "log", "message": "🎯 Math intent verified. Transitioning to NASM core..." }
+      ],
+      "next": "nasm_audit"
+    },
+    {
+      "id": "nasm_audit",
+      "op": "polyglot_eval",
+      "lang": "nasm",
+      "returns": "audit_pulse",
+      "params": {
+        "code": "LI R0, 101\nSYSCALL 1 [NASM]_Pulse_Verified\nRET R0"
+      },
+      "next": "final"
+    },
+    {
+      "id": "final",
+      "op": "log",
+      "params": { "message": "✅ JARVIS v1.0 sequence complete." }
+    }
+  ]
+}

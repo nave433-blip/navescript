@@ -1,0 +1,10 @@
+package nave:serial
+
+interface client {
+    resource connection {
+        constructor(port: string, baud_rate: u32);
+        read: func(len: u32) -> result<list<u8>, string>;
+        write: func(data: list<u8>) -> result<u64, string>;
+        close: func() -> result<_, string>;
+    }
+}

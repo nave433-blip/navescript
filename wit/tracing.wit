@@ -1,0 +1,7 @@
+package nave:observability
+
+interface tracer {
+    start_span: func(name: string) -> u64;
+    end_span: func(id: u64);
+    record_event: func(id: u64, name: string);
+}

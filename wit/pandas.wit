@@ -1,0 +1,9 @@
+package nave:data
+
+interface analysis {
+    resource dataframe {
+        constructor(json_data: string);
+        query: func(q: string) -> result<string, string>;
+        describe: func() -> string;
+    }
+}

@@ -1,4 +1,5 @@
 // src/ffi.rs
+use crate::sandbox::Sandbox;
 use crate::runtime::NaveRuntime;
 use crate::parser;
 use crate::ir;
@@ -8,7 +9,7 @@ use std::fs;
 
 #[no_mangle]
 pub extern "C" fn nave_init() -> *mut NaveRuntime {
-    let rt = NaveRuntime::new().expect("Failed to init runtime");
+    let rt = NaveRuntime::new(Some(Sandbox::permissive())).expect("Failed to init runtime");
     Box::into_raw(Box::new(rt))
 }
 
@@ -35,7 +36,7 @@ pub extern "C" fn nave_run(ctx: *mut NaveRuntime, module_path: *const c_char) ->
 
     let ir = ir::NSIr::from_program(&prog);
 
-    match tokio::runtime::Runtime::new().unwrap().block_on(rt.interpret_ir(&ir)) {
+    match tokio::runtime::Runtime::new().unwrap().block_on(rt.run_wasm_target(&ir.body)) {
         Ok(_) => 0,
         Err(_) => -4,
     }

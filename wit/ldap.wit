@@ -1,0 +1,8 @@
+package nave:network
+
+interface ldap {
+    resource client {
+        constructor(server: string, user: string, pass: string);
+        search: func(base_dn: string, filter: string) -> result<list<string>, string>;
+    }
+}

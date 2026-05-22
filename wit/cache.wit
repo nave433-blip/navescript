@@ -1,0 +1,10 @@
+package nave:cache
+
+interface manager {
+    resource cache {
+        constructor(max_capacity: u64, ttl_secs: u64);
+        get: func(key: string) -> result<string, string>;
+        set: func(key: string, value: string) -> result<_, string>;
+        invalidate: func(key: string) -> result<_, string>;
+    }
+}

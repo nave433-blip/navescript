@@ -1,0 +1,10 @@
+package nave:crypto
+
+interface crypto {
+    sha256: func(data: list<u8>) -> list<u8>;
+    sha512: func(data: list<u8>) -> list<u8>;
+    argon2id: func(password: string, salt: list<u8>) -> result<list<u8>, string>;
+    ed25519-sign: func(private-key: list<u8>, message: list<u8>) -> list<u8>;
+    ed25519-verify: func(public-key: list<u8>, message: list<u8>, signature: list<u8>) -> bool;
+    ed25519-generate-keypair: func() -> tuple<list<u8>, list<u8>>;
+}

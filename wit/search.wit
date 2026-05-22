@@ -1,0 +1,9 @@
+package nave:search
+
+interface engine {
+    resource client {
+        constructor(url: string, api_key: string);
+        search: func(index: string, query: string) -> result<list<string>, string>;
+        add_documents: func(index: string, documents: list<string>) -> result<_, string>;
+    }
+}

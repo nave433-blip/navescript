@@ -22,6 +22,14 @@ pub struct Resource {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct StepIr {
+    pub id: Option<String>,
+    pub instr: Instruction,
+    pub next: Option<String>,
+    pub on_error: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NSIr {
     pub module_name: String,
     pub world: String,
@@ -29,7 +37,7 @@ pub struct NSIr {
     pub imports: Vec<String>,
     pub requirements: Vec<Capability>,
     pub resources: Vec<Resource>,
-    pub body: Vec<Instruction>,
+    pub body: Vec<StepIr>,
     pub exports: Vec<String>,
 }
 
@@ -53,8 +61,8 @@ pub enum Instruction {
     Log(String),
     Call { func: String, args: Vec<String> },
     Try {
-        body: Vec<Instruction>,
-        catch: Vec<Instruction>,
+        body: Vec<StepIr>,
+        catch: Vec<StepIr>,
         retry_count: u32,
     },
     PolyglotEval {
@@ -71,7 +79,7 @@ pub enum Instruction {
         value: serde_json::Value,
     },
     NativeOp {
-        op: String,
+        name: String,
         args: Vec<String>,
         return_var: String,
     },
@@ -84,7 +92,26 @@ pub enum Instruction {
     LoadImm { reg: u8, value: i32 },
     Store { reg: u8, addr: u32 },
     Add { dest: u8, src1: u8, src2: u8 },
+    Sub { dest: u8, src1: u8, src2: u8 },
+    Mul { dest: u8, src1: u8, src2: u8 },
+    Div { dest: u8, src1: u8, src2: u8 },
+    Mod { dest: u8, src1: u8, src2: u8 },
+    And { dest: u8, src1: u8, src2: u8 },
+    Or { dest: u8, src1: u8, src2: u8 },
+    Xor { dest: u8, src1: u8, src2: u8 },
+    Shl { dest: u8, src1: u8, src2: u8 },
+    Shr { dest: u8, src1: u8, src2: u8 },
+    Not { dest: u8, src: u8 },
+    Jmp { label: String },
+    Jz { reg: u8, label: String },
+    Jnz { reg: u8, label: String },
+    Cmp { left: u8, right: u8 },
     Ret { reg: u8 },
+    Return { value_var: Option<String> },
+    Push { value: serde_json::Value },
+    Pop { var: String },
+    CallLabel { label: String },
+    Alloc { size: u32, return_reg: u8 },
     Syscall { id: u32, args: Vec<u8> },
     HttpGet { url_var: String, return_var: String },
     HttpPost { url_var: String, body_var: String, return_var: String },
@@ -93,11 +120,21 @@ pub enum Instruction {
     FileWrite { path_var: String, data_var: String },
     FsRemove { path_var: String, return_var: String },
     Sleep { ms_var: String },
-    If { condition_var: String, then_body: Vec<Instruction>, else_body: Option<Vec<Instruction>> },
-    ForEach { array_var: String, item_var: String, body: Vec<Instruction> },
+    If { condition_var: String, then_body: Vec<StepIr>, else_body: Option<Vec<StepIr>> },
+    While { condition: Vec<StepIr>, condition_var: String, body: Vec<StepIr> },
+    ForEach { array_var: String, item_var: String, body: Vec<StepIr> },
+    DefineFunc { name: String, params: Vec<String>, body: Vec<StepIr> },
+    Block(Vec<StepIr>),
     Input { prompt_var: String, return_var: String },
     JsonParse { string_var: String, return_var: String },
     ComponentCall { component_path_var: String, func_var: String, args_var: String, return_var: String },
+    Await { promise_var: String, return_var: String },
+    Throw { error_var: String },
+    ArrayCreate { elements: Vec<String>, return_var: String },
+    ObjectCreate { properties: Vec<(String, String)>, return_var: String },
+    GetProp { object_var: String, property_var: String, return_var: String },
+    SetProp { object_var: String, property_var: String, value_var: String },
+    Yield { value_var: String },
 }
 
 impl NSIr {
@@ -148,14 +185,14 @@ impl NSIr {
         }
     }
 
-    fn parse_steps(steps: &[crate::parser::Step]) -> Vec<Instruction> {
+    fn parse_steps(steps: &[crate::parser::Step]) -> Vec<StepIr> {
         let mut instrs = Vec::new();
         for s in steps {
             let ret_var = s.returns.clone()
                 .or_else(|| s.params.get("return_var").and_then(|v| v.as_str()).map(|s| s.to_string()))
                 .unwrap_or_else(|| "result".to_string());
             
-            // Extract from 'params' if exists, otherwise assume flat structure for backward compat
+            // Helper for extracting parameters from flat or nested 'params'
             let get_param = |key: &str| -> String {
                 s.params.get(key).and_then(|v| v.as_str())
                     .or_else(|| s.params.get("params").and_then(|p| p.get(key)).and_then(|v| v.as_str()))
@@ -170,10 +207,13 @@ impl NSIr {
                         .or_else(|| s.params.get("params").and_then(|p| p.get("code")).and_then(|v| v.as_str()))
                         .unwrap_or("")
                         .to_string();
+                    let input_var = s.input.clone()
+                        .or_else(|| s.params.get("input_var").and_then(|v| v.as_str()).map(|s| s.to_string()))
+                        .or_else(|| s.params.get("input").and_then(|v| v.as_str()).map(|s| s.to_string()));
                     Instruction::PolyglotEval {
                         lang: s.lang.clone().unwrap_or_else(|| s.params.get("lang").and_then(|v| v.as_str()).unwrap_or("python").to_string()),
                         code,
-                        input_var: s.input.clone(),
+                        input_var,
                         return_var: ret_var,
                     }
                 },
@@ -199,8 +239,33 @@ impl NSIr {
                     var: s.params.get("var").and_then(|v| v.as_str()).unwrap_or("").to_string(),
                     value: s.params.get("value").unwrap_or(&serde_json::Value::Null).clone(),
                 },
+                "native_op" => Instruction::NativeOp {
+                    name: get_param("name"),
+                    args: s.params.get("args").and_then(|v| v.as_array())
+                        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                        .unwrap_or_default(),
+                    return_var: ret_var,
+                },
+                "assert_eq" => Instruction::AssertEq {
+                    left_var: get_param("left_var"),
+                    right_var: get_param("right_var"),
+                    message: get_param("message"),
+                },
                 "http_get" => Instruction::HttpGet {
                     url_var: get_param("url"),
+                    return_var: ret_var,
+                },
+                "http_post" => Instruction::HttpPost {
+                    url_var: get_param("url"),
+                    body_var: get_param("body"),
+                    return_var: ret_var,
+                },
+                "shell_exec" => Instruction::ShellExec {
+                    command_var: get_param("command"),
+                    return_var: ret_var,
+                },
+                "json_parse" => Instruction::JsonParse {
+                    string_var: get_param("json"),
                     return_var: ret_var,
                 },
                 "file_read" => Instruction::FileRead {
@@ -215,6 +280,19 @@ impl NSIr {
                     prompt_var: get_param("prompt"),
                     return_var: ret_var,
                 },
+                "for_each" => {
+                    let body_val = s.params.get("body").or_else(|| s.params.get("params").and_then(|p| p.get("body")));
+                    let body = body_val.and_then(|v| v.as_array())
+                        .map(|arr| {
+                            let steps: Vec<crate::parser::Step> = serde_json::from_value(serde_json::Value::Array(arr.clone())).unwrap_or_default();
+                            Self::parse_steps(&steps)
+                        }).unwrap_or_default();
+                    Instruction::ForEach {
+                        array_var: get_param("array"),
+                        item_var: get_param("item"),
+                        body,
+                    }
+                },
                 "component_call" => Instruction::ComponentCall {
                     component_path_var: get_param("component"),
                     func_var: get_param("func"),
@@ -222,12 +300,15 @@ impl NSIr {
                     return_var: ret_var,
                 },
                 "try" => {
-                    let try_body = s.params.get("body").and_then(|v| v.as_array())
+                    let try_body_val = s.params.get("body").or_else(|| s.params.get("params").and_then(|p| p.get("body")));
+                    let catch_body_val = s.params.get("catch").or_else(|| s.params.get("params").and_then(|p| p.get("catch")));
+
+                    let try_body = try_body_val.and_then(|v| v.as_array())
                         .map(|arr| {
                             let steps: Vec<crate::parser::Step> = serde_json::from_value(serde_json::Value::Array(arr.clone())).unwrap_or_default();
                             Self::parse_steps(&steps)
                         }).unwrap_or_default();
-                    let catch_body = s.params.get("catch").and_then(|v| v.as_array())
+                    let catch_body = catch_body_val.and_then(|v| v.as_array())
                         .map(|arr| {
                             let steps: Vec<crate::parser::Step> = serde_json::from_value(serde_json::Value::Array(arr.clone())).unwrap_or_default();
                             Self::parse_steps(&steps)
@@ -235,17 +316,7 @@ impl NSIr {
                     Instruction::Try {
                         body: try_body,
                         catch: catch_body,
-                        retry_count: s.params.get("retry").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-                    }
-                },
-                "native_op" => {
-                    let args = s.params.get("args").and_then(|v| v.as_array())
-                        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
-                        .unwrap_or_else(|| vec![]);
-                    Instruction::NativeOp {
-                        op: s.params.get("operator").and_then(|v| v.as_str()).unwrap_or("").to_string(),
-                        args,
-                        return_var: ret_var,
+                        retry_count: s.retry.unwrap_or(0),
                     }
                 },
                 "if" => {
@@ -276,16 +347,12 @@ impl NSIr {
                 _ => Instruction::Log(format!("Unknown op: {}", s.op)),
             };
 
-            // Handle retry/on_error by wrapping in Try if needed
-            if let Some(rc) = s.retry {
-                instrs.push(Instruction::Try {
-                    body: vec![base_instr],
-                    catch: vec![], // Future: add on_error handling here
-                    retry_count: rc,
-                });
-            } else {
-                instrs.push(base_instr);
-            }
+            instrs.push(StepIr {
+                id: s.id.clone(),
+                instr: base_instr,
+                next: s.next.clone(),
+                on_error: s.on_error.clone(),
+            });
         }
         instrs
     }

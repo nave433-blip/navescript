@@ -1,0 +1,5 @@
+package nave:ml
+
+interface embeddings {
+    vectorize: func(text: string) -> result<list<f32>, string>;
+}

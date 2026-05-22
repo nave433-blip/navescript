@@ -1,0 +1,8 @@
+package nave:grpc
+
+interface client {
+    resource connection {
+        constructor(url: string);
+        call: func(service: string, method: string, payload: list<u8>) -> result<list<u8>, string>;
+    }
+}

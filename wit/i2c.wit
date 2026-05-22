@@ -1,0 +1,10 @@
+package nave:i2c
+
+interface client {
+    resource connection {
+        constructor(path: string, address: u16);
+        read: func(len: u32) -> result<list<u8>, string>;
+        write: func(data: list<u8>) -> result<_, string>;
+        close: func() -> result<_, string>;
+    }
+}

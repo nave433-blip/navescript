@@ -3,7 +3,7 @@ use cranelift_module::{Module, Linkage};
 use cranelift_object::{ObjectBuilder, ObjectModule};
 use anyhow::Result;
 use cranelift::codegen::Context as CraneliftContext;
-use crate::ir::{NSIr, Instruction};
+use crate::ir::{NSIr, Instruction, StepIr};
 
 pub struct CraneliftBackend {
     builder_context: FunctionBuilderContext,
@@ -40,8 +40,8 @@ impl CraneliftBackend {
         let mut regs: std::collections::HashMap<u8, Value> = std::collections::HashMap::new();
 
         let mut terminated = false;
-        for instr in &ir.body {
-            match instr {
+        for step in &ir.body {
+            match &step.instr {
                 Instruction::Load { reg, addr } => {
                     let val = builder.ins().iconst(types::I32, *addr as i64);
                     regs.insert(*reg, val);
@@ -98,15 +98,17 @@ mod tests {
         let ir = NSIr {
             module_name: "test_cranelift".to_string(),
             world: "cli".to_string(),
+            nit: None,
             imports: vec![],
             requirements: vec![],
             resources: vec![],
             body: vec![
-                Instruction::Load { reg: 0, addr: 10 },
-                Instruction::Load { reg: 1, addr: 20 },
-                Instruction::Add { dest: 2, src1: 0, src2: 1 },
-                Instruction::Ret { reg: 2 },
+                StepIr { id: None, next: None, on_error: None, instr: Instruction::Load { reg: 0, addr: 10 } },
+                StepIr { id: None, next: None, on_error: None, instr: Instruction::Load { reg: 1, addr: 20 } },
+                StepIr { id: None, next: None, on_error: None, instr: Instruction::Add { dest: 2, src1: 0, src2: 1 } },
+                StepIr { id: None, next: None, on_error: None, instr: Instruction::Ret { reg: 2 } },
             ],
+            exports: vec![],
         };
 
         // Should compile correctly without panicking

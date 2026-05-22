@@ -137,6 +137,12 @@ pub trait NasiInterface {
 
 pub struct HostNasi;
 
+impl HostNasi {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl NasiInterface for HostNasi {
     fn fs_read(&self, path: &str) -> NasiResult<String> {
         fs::read_to_string(path).map_err(NasiError::from)

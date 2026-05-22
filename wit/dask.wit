@@ -1,0 +1,8 @@
+package nave:distributed
+
+interface computing {
+    resource client {
+        constructor(address: string);
+        submit: func(code: string) -> result<string, string>;
+    }
+}

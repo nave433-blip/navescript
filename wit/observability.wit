@@ -1,0 +1,5 @@
+package nave:observability
+
+interface logger {
+    log: func(level: string, message: string);
+}

@@ -1,0 +1,10 @@
+package nave:batch
+
+interface processor {
+    resource task {
+        constructor(lang: string, code: string);
+    }
+    
+    // Process a batch of tasks in parallel
+    run: func(tasks: list<task>) -> result<list<string>, string>;
+}

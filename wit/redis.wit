@@ -1,0 +1,9 @@
+package nave:redis
+
+interface client {
+    resource connection {
+        constructor(url: string);
+        get: func(key: string) -> result<string, string>;
+        set: func(key: string, value: string) -> result<_, string>;
+    }
+}
