@@ -1,0 +1,7 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.navescript</groupId>
+    <artifactId>nvs-runtime</artifactId>
+    <version>0.1.0</version>
+    <description>NaveScript JNI Binding</description>
+</project>

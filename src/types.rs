@@ -1,5 +1,5 @@
 // navescript/src/types.rs
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use anyhow::Result;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

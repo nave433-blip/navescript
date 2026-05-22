@@ -1,0 +1,10 @@
+# NaveScript CI/CD Pipeline
+
+The project uses GitHub Actions for CI/CD.
+
+## Pipeline
+- **Build**: Compiles the project for all targets (Linux, macOS, Windows).
+- **Test**: Runs all unit and integration tests.
+- **Lint**: Checks code quality using `golangci-lint`.
+- **Docs**: Automatically generates and deploys documentation to GitHub Pages.
+- **Release**: Automatically builds binaries and creates a GitHub Release on tag push.

@@ -1,0 +1,7 @@
+// src/cli/debug/debug.ns
+import std.core.io
+
+func main(args) {
+    io.println("Navescript Debugger (Native)")
+    // Native breakpoint logic...
+}

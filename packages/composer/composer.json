@@ -1,0 +1,7 @@
+{
+    "name": "navescript/nvs-runtime",
+    "description": "NaveScript PHP FFI Binding",
+    "require": {
+        "php": ">=7.4"
+    }
+}

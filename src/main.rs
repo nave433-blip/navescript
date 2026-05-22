@@ -1,4 +1,4 @@
-use clap::{Parser as ClapParser, Subcommand, ValueEnum};
+use clap::{Parser as ClapParser, Subcommand};
 use anyhow::{Result, Context};
 use std::fs;
 use std::path::PathBuf;
@@ -9,6 +9,20 @@ use navescript::ns_lexer;
 use navescript::ns_parser;
 use navescript::ns_compiler;
 use navescript::polyglot;
+use navescript::stdlib;
+
+async fn run_ns_script(runtime: &mut runtime::NaveRuntime, source: &str, filename: &str) -> Result<()> {
+    let ir = {
+        let mut lexer = ns_lexer::Lexer::new(source.to_string());
+        let tokens = lexer.scan_tokens().map_err(|e| anyhow::anyhow!(e))?;
+        let mut parser = ns_parser::Parser::new(tokens);
+        let stmts = parser.parse().map_err(|e| anyhow::anyhow!(e))?;
+        let mut compiler = ns_compiler::TargetCompiler::new();
+        compiler.compile(&stmts)
+    };
+    runtime.run_wasm_target(&ir).await?;
+    Ok(())
+}
 
 #[derive(ClapParser)]
 #[command(name = "navescript")]
@@ -22,7 +36,7 @@ struct Cli {
     file: Option<PathBuf>,
 
     /// Verbose output
-    #[arg(short = 'V', long, global = true)]
+    #[arg(short = 'v', long, global = true)]
     verbose: bool,
 
     /// Suppress non-error output
@@ -145,7 +159,7 @@ async fn main() -> Result<()> {
             loop {
                 match rl.readline("nλ > ") {
                     Ok(line) => {
-                        rl.add_history_entry(&line)?;
+                        let _ = rl.add_history_entry(&line);
                         if line == "exit" || line == "quit" { break; }
                         let res = run_code(line, "repl.ns", "permissive", 30000, 512).await;
                         if let Err(e) = res { println!("Error: {}", e); }
@@ -175,11 +189,9 @@ async fn main() -> Result<()> {
             if let Some(file_path) = &cli.file {
                 let source = fs::read_to_string(file_path)?;
                 let prog = parser::parse(&source)?;
-                for stmt in &prog {
-                    if let parser::Stmt::Fn { body, name, .. } = stmt {
-                        if body.is_empty() {
-                            println!("Warning: Function '{}' has an empty body.", name);
-                        }
+                for step in &prog.steps {
+                    if step.op == "fn" {
+                        println!("Warning: Function identified in step '{}'.", step.id.as_deref().unwrap_or("unknown"));
                     }
                 }
             } else {
@@ -192,9 +204,9 @@ async fn main() -> Result<()> {
                 let source = fs::read_to_string(file_path)?;
                 let prog = parser::parse(&source)?;
                 println!("Documentation for {}:", file_path.display());
-                for stmt in &prog {
-                    if let parser::Stmt::Fn { name, .. } = stmt {
-                        println!(" - Function: {}", name);
+                for step in &prog.steps {
+                    if step.op == "fn" {
+                        println!(" - Function: {}", step.id.as_deref().unwrap_or("unnamed"));
                     }
                 }
             } else {
@@ -241,6 +253,21 @@ async fn main() -> Result<()> {
 }
 
 async fn run_code(source: String, filename: &str, sandbox_mode: &str, _timeout_ms: u64, _memory_mb: u64) -> Result<()> {
+    let sandbox = match sandbox_mode {
+        "strict" => navescript::Sandbox::strict(),
+        "permissive" => navescript::Sandbox::permissive(),
+        _ => navescript::Sandbox::permissive(),
+    };
+
+    let mut runtime = runtime::NaveRuntime::new(Some(sandbox))?;
+
+    // Bootstrap the standard library
+    for (name, script) in stdlib::bootstrap::get_bootstrap_scripts() {
+        if let Err(e) = run_ns_script(&mut runtime, script, name).await {
+            eprintln!("Failed to load bootstrap script {}: {}", name, e);
+        }
+    }
+
     let ir = if filename.ends_with(".ns") {
         let mut lexer = ns_lexer::Lexer::new(source);
         let tokens = lexer.scan_tokens().map_err(|e| anyhow::anyhow!(e))?;
@@ -253,13 +280,6 @@ async fn run_code(source: String, filename: &str, sandbox_mode: &str, _timeout_m
         ir::NSIr::from_program(&prog).body
     };
 
-    let sandbox = match sandbox_mode {
-        "strict" => navescript::Sandbox::strict(),
-        "permissive" => navescript::Sandbox::permissive(),
-        _ => navescript::Sandbox::permissive(),
-    };
-
-    let mut runtime = runtime::NaveRuntime::new(Some(sandbox))?;
     runtime.run_wasm_target(&ir).await?;
     Ok(())
 }

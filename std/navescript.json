@@ -1,0 +1,7 @@
+{
+    "name": "nvs-std",
+    "version": "0.1.0",
+    "main": "src/index.ns",
+    "dependencies": {},
+    "capabilities": ["fs", "network"]
+}

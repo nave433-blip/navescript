@@ -3,7 +3,7 @@ use cranelift_module::{Module, Linkage};
 use cranelift_object::{ObjectBuilder, ObjectModule};
 use anyhow::Result;
 use cranelift::codegen::Context as CraneliftContext;
-use crate::ir::{NSIr, Instruction, StepIr};
+use crate::ir::{NSIr, Instruction};
 
 pub struct CraneliftBackend {
     builder_context: FunctionBuilderContext,
@@ -91,6 +91,7 @@ impl CraneliftBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ir::StepIr;
 
     #[test]
     fn test_cranelift_backend_basic() {

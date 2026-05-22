@@ -1,0 +1,37 @@
+class Compiler {
+    instructions,
+    constants,
+    symbol_table
+
+    func new() {
+        return Compiler(
+            instructions: [],
+            constants: [],
+            symbol_table: SymbolTable.new()
+        )
+    }
+
+    func compile(node) {
+        if (node.type == "PROGRAM") {
+            for (let stmt in node.statements) {
+                this.compile(stmt)
+            }
+        } else if (node.type == "INTEGER_LITERAL") {
+            this.emit(0, this.add_constant(node.value)) // 0 = OP_CONSTANT
+        } else if (node.type == "INFIX_EXPRESSION") {
+            this.compile(node.left)
+            this.compile(node.right)
+            if (node.operator == "+") { this.emit(1, 0) } // 1 = OP_ADD
+        }
+    }
+
+    func emit(op, operand) {
+        this.instructions.push(op)
+        this.instructions.push(operand)
+    }
+
+    func add_constant(obj) {
+        this.constants.push(obj)
+        return len(this.constants) - 1
+    }
+}

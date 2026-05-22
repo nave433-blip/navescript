@@ -1,0 +1,10 @@
+// src/std/net/http.ns
+
+func get(url) {
+    let response = @nasi::net::http_get(url)
+    return response
+}
+
+func post(url, body) {
+    return @nasi::net::http_post(url, body)
+}

@@ -1,0 +1,51 @@
+// Native Navescript Configuration Framework
+// Functionally equivalent to Go's 'viper' library
+module std.config;
+
+import std.fs;
+import std.json;
+import std.core;
+
+pub class ConfigManager {
+    let configPath: string = "";
+    let data: Map<string, any> = {};
+    let envPrefix: string = "";
+
+    pub fn setConfigPath(path: string) {
+        this.configPath = path;
+    }
+
+    pub fn setEnvPrefix(prefix: string) {
+        this.envPrefix = prefix;
+    }
+
+    pub fn readInConfig() -> bool {
+        let content = fs.read(this.configPath);
+        if (content == null) {
+            return false;
+        }
+        this.data = json.unmarshal(content);
+        return true;
+    }
+
+    pub fn get(key: string) -> any {
+        // Fallback to environment variable if map doesn't contain the key
+        if (this.data[key] == null) {
+            let envKey = this.envPrefix + "_" + key.toUpperCase();
+            // @bash polyglot to fetch env var natively in runtime
+            let envVal = @bash { echo -n ${!envKey} };
+            if (envVal != "") {
+                return envVal;
+            }
+        }
+        return this.data[key];
+    }
+
+    pub fn getString(key: string) -> string {
+        return string(this.get(key));
+    }
+    
+    pub fn set(key: string, value: any) {
+        this.data[key] = value;
+    }
+}

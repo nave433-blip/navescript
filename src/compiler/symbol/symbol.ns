@@ -1,0 +1,20 @@
+// src/compiler/symbol/symbol.ns
+
+class Symbol {
+    name, scope, index
+}
+
+class SymbolTable {
+    store, num_definitions, outer
+
+    func new() {
+        return SymbolTable(store: {}, num_definitions: 0)
+    }
+
+    func define(name) {
+        let sym = Symbol(name: name, index: this.num_definitions, scope: "GLOBAL")
+        this.store[name] = sym
+        this.num_definitions = this.num_definitions + 1
+        return sym
+    }
+}

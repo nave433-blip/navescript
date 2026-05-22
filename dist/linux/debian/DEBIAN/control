@@ -1,0 +1,7 @@
+Package: navescript
+Version: 0.1.0
+Section: devel
+Priority: optional
+Architecture: amd64
+Maintainer: Navescript Team
+Description: The sovereign Navescript language ecosystem.

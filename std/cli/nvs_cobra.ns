@@ -1,0 +1,61 @@
+// Native Navescript CLI Framework
+// Functionally equivalent to Go's 'cobra' library
+module std.cli;
+
+import std.core;
+
+pub class Command {
+    pub let use: string;
+    pub let short: string;
+    pub let long: string;
+    pub let action: fn(Command, string[]);
+    
+    let subcommands: Command[] = [];
+    let flags: Map<string, string> = {};
+
+    pub fn init(use: string, short: string, action: fn(Command, string[])) {
+        this.use = use;
+        this.short = short;
+        this.action = action;
+    }
+
+    pub fn addCommand(cmd: Command) {
+        this.subcommands.push(cmd);
+    }
+
+    pub fn addFlag(name: string, defaultVal: string, description: string) {
+        this.flags[name] = defaultVal;
+    }
+
+    pub fn getFlag(name: string) -> string {
+        return this.flags[name];
+    }
+
+    pub fn execute(args: string[]) {
+        if (args.length > 0) {
+            let subName = args[0];
+            for (let sub in this.subcommands) {
+                if (sub.use == subName) {
+                    sub.execute(args.slice(1));
+                    return;
+                }
+            }
+        }
+        
+        // Execute this command's action if no subcommands matched or args are empty
+        if (this.action != null) {
+            this.action(this, args);
+        } else {
+            this.showHelp();
+        }
+    }
+
+    pub fn showHelp() {
+        core.println("Usage: " + this.use);
+        core.println(this.short);
+        core.println("\nAvailable Commands:");
+        for (let sub in this.subcommands) {
+            core.println("  " + sub.use + " - " + sub.short);
+        }
+    }
+}

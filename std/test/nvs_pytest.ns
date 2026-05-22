@@ -1,0 +1,54 @@
+// Native Navescript Testing Framework
+// Functionally equivalent to Go's 'testing' and Python's 'pytest'
+module std.test;
+
+import std.core;
+
+pub class TestResult {
+    pub let passed: bool;
+    pub let errorMessage: string;
+}
+
+pub class TestRunner {
+    let tests: Map<string, fn() -> void> = {};
+    let passedCount: number = 0;
+    let failedCount: number = 0;
+
+    pub fn addTest(name: string, testFn: fn() -> void) {
+        this.tests[name] = testFn;
+    }
+
+    pub fn runAll() {
+        core.println("🏃 Starting Navescript Test Suite...");
+        
+        for (let name in this.tests) {
+            let testFn = this.tests[name];
+            try {
+                testFn();
+                core.println("✅ PASS: " + name);
+                this.passedCount++;
+            } catch (err) {
+                core.println("❌ FAIL: " + name + " | Error: " + err.message);
+                this.failedCount++;
+            }
+        }
+
+        core.println("\n📊 Test Results: " + this.passedCount + " passed, " + this.failedCount + " failed.");
+        if (this.failedCount > 0) {
+            core.panic("Test suite failed.");
+        }
+    }
+}
+
+// Assertions
+pub fn assertEq(actual: any, expected: any, msg: string = "Values are not equal") {
+    if (actual != expected) {
+        throw new Error(msg + " (Expected: " + expected + ", Actual: " + actual + ")");
+    }
+}
+
+pub fn assertTrue(condition: bool, msg: string = "Condition is not true") {
+    if (!condition) {
+        throw new Error(msg);
+    }
+}

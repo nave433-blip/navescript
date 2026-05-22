@@ -1,6 +1,5 @@
 use crate::runtime::{NaveRuntime, Value};
 use pcap::{Capture, Device};
-use std::collections::HashMap;
 
 pub fn register(rt: &mut NaveRuntime) {
     rt.register_async("Network_capture", |args| async move {

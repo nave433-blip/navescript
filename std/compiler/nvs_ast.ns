@@ -1,0 +1,69 @@
+// Native Navescript AST Definitions
+// Functionally equivalent to the Go/Rust AST nodes
+module std.compiler.ast;
+
+import std.compiler.lexer;
+
+pub interface Node {
+    fn tokenLiteral() -> string;
+}
+
+pub interface Statement extends Node {}
+pub interface Expression extends Node {}
+
+pub class Program {
+    pub let statements: Statement[] = [];
+}
+
+pub class LetStatement implements Statement {
+    pub let token: lexer.Token;
+    pub let name: Identifier;
+    pub let value: Expression;
+
+    pub fn tokenLiteral() -> string { return this.token.literal; }
+}
+
+pub class ReturnStatement implements Statement {
+    pub let token: lexer.Token;
+    pub let returnValue: Expression;
+
+    pub fn tokenLiteral() -> string { return this.token.literal; }
+}
+
+pub class ExpressionStatement implements Statement {
+    pub let token: lexer.Token;
+    pub let expression: Expression;
+
+    pub fn tokenLiteral() -> string { return this.token.literal; }
+}
+
+pub class Identifier implements Expression {
+    pub let token: lexer.Token;
+    pub let value: string;
+
+    pub fn tokenLiteral() -> string { return this.token.literal; }
+}
+
+pub class IntegerLiteral implements Expression {
+    pub let token: lexer.Token;
+    pub let value: number;
+
+    pub fn tokenLiteral() -> string { return this.token.literal; }
+}
+
+pub class PrefixExpression implements Expression {
+    pub let token: lexer.Token;
+    pub let operator: string;
+    pub let right: Expression;
+
+    pub fn tokenLiteral() -> string { return this.token.literal; }
+}
+
+pub class InfixExpression implements Expression {
+    pub let token: lexer.Token;
+    pub let left: Expression;
+    pub let operator: string;
+    pub let right: Expression;
+
+    pub fn tokenLiteral() -> string { return this.token.literal; }
+}

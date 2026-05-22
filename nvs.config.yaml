@@ -1,0 +1,27 @@
+# NaveScript Master Configuration (nvs.config.yaml)
+# This file consolidates build, environment, and polyglot configurations.
+
+project:
+  name: navescript
+  version: 0.1.0
+  target: native
+
+build:
+  optimization: o3
+  lto: true
+  platform_defaults:
+    darwin:
+      flags: ["-arch arm64", "-arch x86_64"]
+    linux:
+      flags: ["-static"]
+    windows:
+      flags: ["/MT"]
+
+polyglot_engines:
+  enabled: ["python", "js", "wasm", "asm"]
+  python_path: "/usr/bin/python3"
+  wasm_runtime: "wasmtime"
+
+registry:
+  url: "https://reg.navescript.org"
+  auth_mode: "token"

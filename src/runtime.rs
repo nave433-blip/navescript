@@ -139,6 +139,7 @@ impl NaveRuntime {
         config.wasm_bulk_memory(true);
         config.wasm_multi_value(true);
         config.wasm_reference_types(true);
+        config.async_support(true);
         config.cranelift_opt_level(OptLevel::SpeedAndSize);
         config.consume_fuel(true);
         config.epoch_interruption(true);
@@ -160,7 +161,7 @@ impl NaveRuntime {
         let module = Module::new(&engine, &wat)
             .context("Failed to compile IR to WASM module")?;
 
-        let instance = linker.instantiate(&mut store, &module)
+        let instance = linker.instantiate_async(&mut store, &module).await
             .context("Failed to instantiate WASM module")?;
 
         let execution = async {

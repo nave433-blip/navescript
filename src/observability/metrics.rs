@@ -1,4 +1,4 @@
-use prometheus::{Encoder, TextEncoder, Registry, Counter, Gauge, opts};
+use prometheus::{Registry, Counter, Gauge};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 

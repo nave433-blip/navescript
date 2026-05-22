@@ -7,6 +7,7 @@ pub mod system;
 pub mod intl;
 pub mod timer;
 pub mod error;
+pub mod bootstrap;
 
 pub fn register(rt: &mut crate::runtime::NaveRuntime) {
     console::register(rt);

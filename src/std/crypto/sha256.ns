@@ -1,0 +1,5 @@
+// src/std/crypto/sha256.ns
+
+func hash(data) {
+    return @nasi::crypto::sha256(data)
+}

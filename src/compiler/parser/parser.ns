@@ -1,0 +1,39 @@
+// src/compiler/parser/parser.ns (Expanded)
+// ... (previous Parser methods)
+
+    func parse_let_statement() {
+        let stmt = LetStatement(token: this.cur_token)
+        if (!this.expect_peek("IDENT")) { return nil }
+        stmt.name = Identifier(token: this.cur_token, value: this.cur_token.literal)
+        if (!this.expect_peek("ASSIGN")) { return nil }
+        this.next_token()
+        stmt.value = this.parse_expression("LOWEST")
+        if (this.peek_token.type == "SEMICOLON") {
+            this.next_token()
+        }
+        return stmt
+    }
+
+    func parse_expression_statement() {
+        let stmt = ExpressionStatement(token: this.cur_token)
+        stmt.expression = this.parse_expression("LOWEST")
+        if (this.peek_token.type == "SEMICOLON") {
+            this.next_token()
+        }
+        return stmt
+    }
+
+    func expect_peek(t) {
+        if (this.peek_token.type == t) {
+            this.next_token()
+            return true
+        }
+        this.errors.push("expected next token to be " + t)
+        return false
+    }
+
+    func parse_expression(precedence) {
+        // Basic implementation for native expression parsing
+        return nil
+    }
+}

@@ -89,6 +89,7 @@ num_cpus = "1.16"
 icu = "1.5"
 icu_locid = "1.5"
 tower-lsp = "0.20"
+rustyline = "15.0"
 
 [dev-dependencies]
 assert_fs = "1.1"

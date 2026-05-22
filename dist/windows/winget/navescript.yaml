@@ -1,0 +1,9 @@
+Id: Navescript.Navescript
+Version: 0.1.0
+Name: Navescript
+Publisher: Navescript
+License: MIT
+Installers:
+  - Architecture: x64
+    Url: https://navescript.org/download/nvs-0.1.0-windows-x64.zip
+    InstallerType: zip

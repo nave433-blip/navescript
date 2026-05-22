@@ -1,0 +1,33 @@
+// src/compiler/lexer/lexer.ns (Expanded)
+// ... (previous Lexer methods)
+
+    func is_letter(ch) {
+        return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch == '_')
+    }
+
+    func is_digit(ch) {
+        return ch >= '0' && ch <= '9'
+    }
+
+    func read_identifier() {
+        let pos = this.pos
+        while (this.is_letter(this.char)) {
+            this.read_char()
+        }
+        return this.input.slice(pos, this.pos)
+    }
+
+    func read_number() {
+        let pos = this.pos
+        while (this.is_digit(this.char)) {
+            this.read_char()
+        }
+        return this.input.slice(pos, this.pos)
+    }
+
+    func skip_whitespace() {
+        while (this.char == ' ' || this.char == '\t' || this.char == '\n' || this.char == '\r') {
+            this.read_char()
+        }
+    }
+}

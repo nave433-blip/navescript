@@ -1,0 +1,48 @@
+// Native Navescript JSON-RPC Framework
+// Functionally equivalent to Go's 'jsonrpc2' library used for LSP
+module std.rpc;
+
+import std.json;
+import std.core;
+
+pub class Request {
+    pub let jsonrpc: string = "2.0";
+    pub let id: number | string;
+    pub let method: string;
+    pub let params: any;
+}
+
+pub class Response {
+    pub let jsonrpc: string = "2.0";
+    pub let id: number | string;
+    pub let result: any;
+    pub let error: any;
+}
+
+pub class RPCServer {
+    let handlers: Map<string, fn(Request) -> any> = {};
+
+    pub fn register(method: string, handler: fn(Request) -> any) {
+        this.handlers[method] = handler;
+    }
+
+    pub fn handleMessage(rawMessage: string) -> string {
+        let req: Request = json.unmarshal(rawMessage);
+        
+        let handler = this.handlers[req.method];
+        let resp = new Response();
+        resp.id = req.id;
+
+        if (handler != null) {
+            try {
+                resp.result = handler(req);
+            } catch (err) {
+                resp.error = { "code": -32603, "message": err.message };
+            }
+        } else {
+            resp.error = { "code": -32601, "message": "Method not found" };
+        }
+
+        return json.marshal(resp);
+    }
+}

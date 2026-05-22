@@ -1,11 +1,11 @@
 use crate::runtime::{NaveRuntime, Value};
-use sha2::{Sha224, Sha256, Sha384, Sha512, Digest};
-use sha3::{Sha3_224, Sha3_256, Sha3_384, Sha3_512};
+use sha2::{Sha256, Sha512, Digest};
+use sha3::Sha3_256;
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
     Argon2,
 };
-use ed25519_dalek::{SigningKey, VerifyingKey, Signature, Signer, Verifier};
+use ed25519_dalek::{SigningKey, Signer};
 use rsa::{RsaPrivateKey, RsaPublicKey, Pkcs1v15Encrypt};
 use rand::RngCore;
 use hex;

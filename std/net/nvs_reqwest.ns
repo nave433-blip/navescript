@@ -1,0 +1,63 @@
+// Native Navescript HTTP Client
+// Functionally equivalent to 'net/http' in Go or 'reqwest' in Rust
+module std.net.http;
+
+import std.core;
+import std.json;
+
+pub class Request {
+    pub let url: string;
+    pub let method: string;
+    pub let headers: Map<string, string> = {};
+    pub let body: string = "";
+
+    pub fn init(method: string, url: string) {
+        this.method = method;
+        this.url = url;
+    }
+
+    pub fn setHeader(key: string, value: string) {
+        this.headers[key] = value;
+    }
+}
+
+pub class Response {
+    pub let statusCode: number;
+    pub let body: string;
+    pub let headers: Map<string, string>;
+
+    pub fn json() -> any {
+        return json.unmarshal(this.body);
+    }
+}
+
+pub class Client {
+    pub fn do(req: Request) -> Response {
+        // Here we map down to the underlying C/Go/Rust FFI network caller
+        // We use @rust polyglot boundary as a conceptual native bridge
+        let rawResponse = @rust {
+            // Conceptually calls a native networking stack
+            // return nvs_ffi_net_request(req.method, req.url, req.headers, req.body);
+        };
+        
+        // Let's assume rawResponse is a JSON string of {statusCode, body, headers}
+        let parsed = json.unmarshal(rawResponse);
+        let resp = new Response();
+        resp.statusCode = parsed.statusCode;
+        resp.body = parsed.body;
+        resp.headers = parsed.headers;
+        
+        return resp;
+    }
+
+    pub fn get(url: string) -> Response {
+        let req = new Request("GET", url);
+        return this.do(req);
+    }
+
+    pub fn post(url: string, body: string) -> Response {
+        let req = new Request("POST", url);
+        req.body = body;
+        return this.do(req);
+    }
+}

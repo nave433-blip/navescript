@@ -1,5 +1,4 @@
 use crate::runtime::{NaveRuntime, Value};
-use std::collections::HashMap;
 
 pub fn register(rt: &mut NaveRuntime) {
     rt.register_async("Taint_mark_source", |args| async move {

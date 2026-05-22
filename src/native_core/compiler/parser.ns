@@ -1,0 +1,34 @@
+class Parser {
+    lexer,
+    cur_token,
+    peek_token
+
+    func new(lexer) {
+        let p = Parser(lexer: lexer)
+        p.next_token()
+        p.next_token()
+        return p
+    }
+
+    func next_token() {
+        this.cur_token = this.peek_token
+        this.peek_token = this.lexer.next_token()
+    }
+
+    func parse_program() {
+        let program = []
+        while (this.cur_token.type != "EOF") {
+            let stmt = this.parse_statement()
+            if (stmt != nil) {
+                program.push(stmt)
+            }
+            this.next_token()
+        }
+        return program
+    }
+
+    func parse_statement() {
+        // Simple statement parsing logic
+        return nil
+    }
+}

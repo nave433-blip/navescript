@@ -1,0 +1,166 @@
+// Native Navescript Pratt Parser
+// Functionally equivalent to the Go/Rust parser implementation
+module std.compiler.parser;
+
+import std.compiler.lexer;
+import std.compiler.ast;
+import std.core;
+
+pub enum Precedence {
+    LOWEST = 1,
+    EQUALS = 2,
+    LESSGREATER = 3,
+    SUM = 4,
+    PRODUCT = 5,
+    PREFIX = 6,
+    CALL = 7
+}
+
+pub class Parser {
+    let l: lexer.Lexer;
+    let curToken: lexer.Token;
+    let peekToken: lexer.Token;
+    let errors: string[] = [];
+
+    // Prefix/Infix parse functions mapped by TokenType
+    let prefixParseFns: Map<lexer.TokenType, fn() -> ast.Expression> = {};
+    let infixParseFns: Map<lexer.TokenType, fn(ast.Expression) -> ast.Expression> = {};
+    let precedences: Map<lexer.TokenType, Precedence> = {};
+
+    pub fn init(l: lexer.Lexer) {
+        this.l = l;
+        
+        // Register precedences
+        this.precedences[lexer.TokenType.ASSIGN] = Precedence.EQUALS;
+        this.precedences[lexer.TokenType.PLUS] = Precedence.SUM;
+        this.precedences[lexer.TokenType.MINUS] = Precedence.SUM;
+        this.precedences[lexer.TokenType.ASTERISK] = Precedence.PRODUCT;
+        this.precedences[lexer.TokenType.SLASH] = Precedence.PRODUCT;
+
+        // Register prefix functions
+        this.registerPrefix(lexer.TokenType.IDENT, this.parseIdentifier);
+        this.registerPrefix(lexer.TokenType.INT, this.parseIntegerLiteral);
+
+        // Register infix functions
+        this.registerInfix(lexer.TokenType.PLUS, this.parseInfixExpression);
+        this.registerInfix(lexer.TokenType.MINUS, this.parseInfixExpression);
+
+        this.nextToken();
+        this.nextToken();
+    }
+
+    fn nextToken() {
+        this.curToken = this.peekToken;
+        this.peekToken = this.l.nextToken();
+    }
+
+    fn registerPrefix(tokenType: lexer.TokenType, fn: fn() -> ast.Expression) {
+        this.prefixParseFns[tokenType] = fn;
+    }
+
+    fn registerInfix(tokenType: lexer.TokenType, fn: fn(ast.Expression) -> ast.Expression) {
+        this.infixParseFns[tokenType] = fn;
+    }
+
+    pub fn parseProgram() -> ast.Program {
+        let program = new ast.Program();
+        
+        while (this.curToken.type != lexer.TokenType.EOF) {
+            let stmt = this.parseStatement();
+            if (stmt != null) {
+                program.statements.push(stmt);
+            }
+            this.nextToken();
+        }
+        return program;
+    }
+
+    fn parseStatement() -> ast.Statement {
+        if (this.curToken.type == lexer.TokenType.LET) {
+            return this.parseLetStatement();
+        }
+        return this.parseExpressionStatement();
+    }
+
+    fn parseLetStatement() -> ast.LetStatement {
+        let stmt = new ast.LetStatement(token: this.curToken);
+        
+        if (!this.expectPeek(lexer.TokenType.IDENT)) return null;
+        
+        stmt.name = new ast.Identifier(token: this.curToken, value: this.curToken.literal);
+        
+        if (!this.expectPeek(lexer.TokenType.ASSIGN)) return null;
+        
+        this.nextToken();
+        stmt.value = this.parseExpression(Precedence.LOWEST);
+        
+        return stmt;
+    }
+
+    fn parseExpressionStatement() -> ast.ExpressionStatement {
+        let stmt = new ast.ExpressionStatement(token: this.curToken);
+        stmt.expression = this.parseExpression(Precedence.LOWEST);
+        return stmt;
+    }
+
+    fn parseExpression(precedence: Precedence) -> ast.Expression {
+        let prefix = this.prefixParseFns[this.curToken.type];
+        if (prefix == null) {
+            this.errors.push("No prefix parse function for " + this.curToken.type);
+            return null;
+        }
+
+        let leftExp = prefix();
+
+        while (this.peekToken.type != lexer.TokenType.EOF && precedence < this.peekPrecedence()) {
+            let infix = this.infixParseFns[this.peekToken.type];
+            if (infix == null) return leftExp;
+
+            this.nextToken();
+            leftExp = infix(leftExp);
+        }
+
+        return leftExp;
+    }
+
+    fn parseIdentifier() -> ast.Expression {
+        return new ast.Identifier(token: this.curToken, value: this.curToken.literal);
+    }
+
+    fn parseIntegerLiteral() -> ast.Expression {
+        let value = core.parseInt(this.curToken.literal);
+        return new ast.IntegerLiteral(token: this.curToken, value: value);
+    }
+
+    fn parseInfixExpression(left: ast.Expression) -> ast.Expression {
+        let expression = new ast.InfixExpression(token: this.curToken, operator: this.curToken.literal, left: left);
+        let precedence = this.curPrecedence();
+        this.nextToken();
+        expression.right = this.parseExpression(precedence);
+        return expression;
+    }
+
+    fn peekPrecedence() -> Precedence {
+        if (this.precedences[this.peekToken.type] != null) {
+            return this.precedences[this.peekToken.type];
+        }
+        return Precedence.LOWEST;
+    }
+
+    fn curPrecedence() -> Precedence {
+        if (this.precedences[this.curToken.type] != null) {
+            return this.precedences[this.curToken.type];
+        }
+        return Precedence.LOWEST;
+    }
+
+    fn expectPeek(t: lexer.TokenType) -> bool {
+        if (this.peekToken.type == t) {
+            this.nextToken();
+            return true;
+        } else {
+            this.errors.push("Expected token " + t + " but got " + this.peekToken.type);
+            return false;
+        }
+    }
+}

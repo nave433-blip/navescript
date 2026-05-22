@@ -1,0 +1,18 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "main": "src/main.ns",
+  "dependencies": {
+    "@std/http": "^2.1",
+    "@polyglot/python": "latest"
+  },
+  "scripts": {
+    "dev": "navescript run src/main.ns --watch",
+    "build": "navescript build --target wasm",
+    "test": "navescript test"
+  },
+  "polyglot": {
+    "python": { "version": "3.12" },
+    "rust": { "edition": "2021" }
+  }
+}

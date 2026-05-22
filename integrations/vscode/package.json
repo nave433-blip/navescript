@@ -1,0 +1,23 @@
+{
+    "name": "navescript",
+    "displayName": "Navescript",
+    "description": "Navescript language support for VS Code",
+    "version": "0.1.0",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": ["Programming Languages"],
+    "contributes": {
+        "languages": [{
+            "id": "navescript",
+            "aliases": ["Navescript", "nvs"],
+            "extensions": [".ns", ".nave"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "navescript",
+            "scopeName": "source.nvs",
+            "path": "./syntaxes/nvs.tmLanguage.json"
+        }]
+    }
+}

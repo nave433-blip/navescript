@@ -1,0 +1,9 @@
+// src/std/json/json.ns
+
+func parse(data) {
+    return @nasi::json::parse(data)
+}
+
+func stringify(obj) {
+    return @nasi::json::stringify(obj)
+}

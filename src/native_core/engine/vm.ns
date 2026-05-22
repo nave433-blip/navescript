@@ -1,0 +1,43 @@
+// navescript/src/native_core/engine/vm.ns (Optimized)
+
+class VM {
+    // ... previous members ...
+
+    // Pre-allocated stack to avoid dynamic growth
+    func new(bytecode) {
+        let vm = VM(
+            instructions: bytecode.instructions,
+            constants: bytecode.constants,
+            stack: [0] * 4096, // Pre-allocated stack size
+            sp: 0
+        )
+        return vm
+    }
+
+    func run() {
+        let ip = 0
+        let inst = this.instructions
+        let st = this.stack
+        
+        while (ip < len(inst)) {
+            let op = inst[ip]
+            
+            // Inline opcode dispatch logic for performance
+            if (op == 0) { // OP_CONSTANT
+                ip = ip + 1
+                st[this.sp] = this.constants[inst[ip]]
+                this.sp = this.sp + 1
+            } else if (op == 1) { // OP_ADD
+                this.sp = this.sp - 1
+                let r = st[this.sp]
+                this.sp = this.sp - 1
+                let l = st[this.sp]
+                st[this.sp] = l + r
+                this.sp = this.sp + 1
+            }
+            // ... (rest of opcodes)
+            
+            ip = ip + 1
+        }
+    }
+}

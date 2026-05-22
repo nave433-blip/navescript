@@ -1,0 +1,8 @@
+// Native instruction set definitions
+let OP_CONSTANT = 0
+let OP_ADD = 1
+let OP_SUB = 2
+let OP_MUL = 3
+let OP_DIV = 4
+let OP_POP = 5
+let OP_JUMP = 6

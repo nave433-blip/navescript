@@ -21,23 +21,48 @@ impl TargetCompiler {
     }
 
     pub fn ir_to_wat(ir: &[StepIr]) -> String {
-        let mut wat = String::from("(module\n  (import \"env\" \"nave_print\" (func $nave_print (param i32 i32)))\n  (memory (export \"memory\") 1)\n  (func (export \"main\")\n");
-        
+        let mut wat = String::from("(module\n  (import \"env\" \"nave_print\" (func $nave_print (param i32 i32)))\n  (memory (export \"memory\") 1)\n");
+        let mut data_offset = 0;
+        let mut data_section = String::new();
+
+        let mut body = String::from("  (func (export \"main\")\n");
         for step in ir {
             match &step.instr {
                 Instruction::Log(msg) => {
-                    wat.push_str(&format!("    ;; Log: {}\n", msg));
+                    let msg_bytes = msg.as_bytes();
+                    let escaped_msg = msg.replace("\"", "\\\"");
+                    data_section.push_str(&format!("  (data (i32.const {}) \"{}\")\n", data_offset, escaped_msg));
+                    body.push_str(&format!("    i32.const {}\n    i32.const {}\n    call $nave_print\n", data_offset, msg_bytes.len()));
+                    data_offset += msg_bytes.len() as i32;
+
                 }
                 Instruction::NativeOp { name, .. } => {
-                    wat.push_str(&format!("    ;; NativeOp: {}\n", name));
+                    // Placeholder for native ops: just log for now
+                    let msg = format!("NativeOp: {}", name);
+                    let msg_bytes = msg.as_bytes();
+                    let escaped_msg = msg.replace("\"", "\\\"");
+                    data_section.push_str(&format!("  (data (i32.const {}) \"{}\")\n", data_offset, escaped_msg));
+                    body.push_str(&format!("    i32.const {}\n    i32.const {}\n    call $nave_print\n", data_offset, msg_bytes.len()));
+                    data_offset += msg_bytes.len() as i32;
+
                 }
-                _ => {
-                    wat.push_str("    ;; Instruction placeholder\n");
+                Instruction::SetVar { var, value } => {
+                    let msg = format!("SetVar: {} = {}", var, value);
+                    let msg_bytes = msg.as_bytes();
+                    let escaped_msg = msg.replace("\"", "\\\"");
+                    data_section.push_str(&format!("  (data (i32.const {}) \"{}\")\n", data_offset, escaped_msg));
+                    body.push_str(&format!("    i32.const {}\n    i32.const {}\n    call $nave_print\n", data_offset, msg_bytes.len()));
+                    data_offset += msg_bytes.len() as i32;
+
                 }
+                _ => {}
             }
         }
         
-        wat.push_str("  )\n)\n");
+        body.push_str("  )\n");
+        wat.push_str(&data_section);
+        wat.push_str(&body);
+        wat.push_str(")\n");
         wat
     }
 

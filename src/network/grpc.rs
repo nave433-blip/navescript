@@ -1,5 +1,4 @@
 use tonic::transport::Channel;
-use std::collections::HashMap;
 
 pub struct GrpcHost {
     channel: Channel,
@@ -14,7 +13,7 @@ impl GrpcHost {
         Ok(GrpcHost { channel })
     }
 
-    pub async fn call(&self, service: &str, method: &str, payload: Vec<u8>) -> Result<Vec<u8>, String> {
+    pub async fn call(&self, service: &str, method: &str, _payload: Vec<u8>) -> Result<Vec<u8>, String> {
         // This is a skeleton. A real implementation requires generating 
         // the client code from the Protobuf definition at compile time.
         Err(format!("gRPC dynamic call not implemented for {}/{}", service, method))

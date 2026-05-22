@@ -1,0 +1,38 @@
+{
+    "scopeName": "source.nvs",
+    "patterns": [
+        { "include": "#comments" },
+        { "include": "#keywords" },
+        { "include": "#literals" },
+        { "include": "#identifiers" }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [{
+                "name": "comment.line.double-slash.nvs",
+                "match": "//.*"
+            }]
+        },
+        "keywords": {
+            "patterns": [{
+                "name": "keyword.control.nvs",
+                "match": "\\b(let|fn|if|else|return|while|for|import|go|chan)\\b"
+            }]
+        },
+        "literals": {
+            "patterns": [{
+                "name": "string.quoted.double.nvs",
+                "match": "\"[^\"]*\""
+            }, {
+                "name": "constant.numeric.nvs",
+                "match": "\\b\\d+(\\.\\d+)?\\b"
+            }]
+        },
+        "identifiers": {
+            "patterns": [{
+                "name": "variable.other.nvs",
+                "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+            }]
+        }
+    }
+}

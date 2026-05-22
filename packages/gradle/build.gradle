@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+}
+group = 'org.navescript'
+version = '0.1.0'
+dependencies {
+    implementation 'net.java.dev.jna:jna:5.13.0'
+}

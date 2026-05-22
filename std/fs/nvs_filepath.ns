@@ -1,0 +1,55 @@
+// Native Navescript Path Manipulation
+// Functionally equivalent to Go's 'path/filepath' or Rust's 'std::path'
+module std.fs.path;
+
+import std.core;
+
+pub class Path {
+    pub let separator: string = "/"; // Defaults to unix-style, runtime adjusts for Windows
+
+    pub fn init() {
+        // Automatically determine separator based on OS via FFI
+        let osName = @bash { echo -n $OSTYPE };
+        if (osName.indexOf("msys") >= 0 || osName.indexOf("win32") >= 0) {
+            this.separator = "\\";
+        }
+    }
+
+    pub fn join(paths: string[]) -> string {
+        let result = "";
+        for (let i = 0; i < paths.length; i++) {
+            let p = paths[i];
+            if (p == "") continue;
+            
+            // Strip trailing separators
+            while (p.endsWith(this.separator)) {
+                p = p.substring(0, p.length - 1);
+            }
+            
+            if (result != "") {
+                result += this.separator;
+            }
+            result += p;
+        }
+        return result;
+    }
+
+    pub fn base(path: string) -> string {
+        let lastSlash = path.lastIndexOf(this.separator);
+        if (lastSlash < 0) return path;
+        return path.substring(lastSlash + 1, path.length);
+    }
+
+    pub fn dir(path: string) -> string {
+        let lastSlash = path.lastIndexOf(this.separator);
+        if (lastSlash <= 0) return this.separator; // Root or relative
+        return path.substring(0, lastSlash);
+    }
+
+    pub fn ext(path: string) -> string {
+        let baseName = this.base(path);
+        let lastDot = baseName.lastIndexOf(".");
+        if (lastDot < 0) return "";
+        return baseName.substring(lastDot, baseName.length);
+    }
+}

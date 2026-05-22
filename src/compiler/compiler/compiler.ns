@@ -1,0 +1,39 @@
+// src/compiler/compiler/compiler.ns
+
+class Compiler {
+    instructions,
+    constants,
+    symbol_table
+
+    func new() {
+        return Compiler(
+            instructions: [],
+            constants: [],
+            symbol_table: SymbolTable.new()
+        )
+    }
+
+    func compile(node) {
+        if (node.type == "PROGRAM") {
+            for (let stmt in node.statements) {
+                this.compile(stmt)
+            }
+        } else if (node.type == "LET_STATEMENT") {
+            this.compile(node.value)
+            let sym = this.symbol_table.define(node.name.value)
+            this.emit("SET_GLOBAL", sym.index)
+        } else if (node.type == "INTEGER_LITERAL") {
+            this.emit("CONSTANT", this.add_constant(node.value))
+        }
+    }
+
+    func emit(op, operand) {
+        this.instructions.push(op)
+        this.instructions.push(operand)
+    }
+
+    func add_constant(obj) {
+        this.constants.push(obj)
+        return len(this.constants) - 1
+    }
+}

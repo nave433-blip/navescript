@@ -1,0 +1,89 @@
+// Native Navescript Compiler Frontend
+// Functionally equivalent to Rust's 'logos' and Go's lexer
+module std.compiler.lexer;
+
+pub enum TokenType {
+    EOF,
+    IDENT,
+    INT,
+    FLOAT,
+    STRING,
+    PLUS,
+    MINUS,
+    ASSIGN,
+    LET,
+    FN,
+    CLASS
+}
+
+pub class Token {
+    pub let type: TokenType;
+    pub let literal: string;
+    pub let line: number;
+    pub let column: number;
+}
+
+pub class Lexer {
+    let input: string;
+    let position: number = 0;
+    let line: number = 1;
+    let column: number = 1;
+
+    pub fn init(source: string) {
+        this.input = source;
+    }
+
+    fn peek() -> string {
+        if (this.position >= this.input.length) return "\0";
+        return this.input.charAt(this.position);
+    }
+
+    fn advance() -> string {
+        let ch = this.peek();
+        this.position++;
+        this.column++;
+        if (ch == "\n") {
+            this.line++;
+            this.column = 1;
+        }
+        return ch;
+    }
+
+    pub fn nextToken() -> Token {
+        // Skip whitespace
+        while (this.peek() == " " || this.peek() == "\n" || this.peek() == "\t") {
+            this.advance();
+        }
+
+        let ch = this.peek();
+        if (ch == "\0") return new Token(type: TokenType.EOF, literal: "", line: this.line, column: this.column);
+
+        // Basic lexing logic
+        if (ch == "=") {
+            this.advance();
+            return new Token(type: TokenType.ASSIGN, literal: "=", line: this.line, column: this.column);
+        }
+        
+        if (this.isLetter(ch)) {
+            let start = this.position;
+            while (this.isLetter(this.peek())) this.advance();
+            let ident = this.input.substring(start, this.position);
+            
+            // Map keywords
+            let type = TokenType.IDENT;
+            if (ident == "let") type = TokenType.LET;
+            if (ident == "fn") type = TokenType.FN;
+            if (ident == "class") type = TokenType.CLASS;
+
+            return new Token(type: type, literal: ident, line: this.line, column: this.column);
+        }
+
+        // Catch-all
+        let illegalCh = this.advance();
+        return new Token(type: TokenType.ILLEGAL, literal: illegalCh, line: this.line, column: this.column);
+    }
+
+    fn isLetter(ch: string) -> bool {
+        return (ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z") || ch == "_";
+    }
+}

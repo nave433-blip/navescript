@@ -1,0 +1,21 @@
+// src/cli/nvs.ns
+import std.core.io
+import std.fs.fs
+
+func main(args) {
+    if (len(args) < 1) {
+        io.println("Usage: nvs <command> [args]")
+        io.exit(1)
+    }
+
+    let cmd = args[0]
+    
+    if (cmd == "run") {
+        io.println("Executing " + args[1] + "...")
+        // Native execution logic to be bootstrapped next
+    } else if (cmd == "build") {
+        io.println("Building project...")
+    } else {
+        io.println("Unknown command: " + cmd)
+    }
+}

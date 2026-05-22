@@ -1,0 +1,8 @@
+# NaveScript Node.js Package
+{
+  "name": "nvs-runtime",
+  "version": "0.1.0",
+  "description": "NaveScript runtime binding for Node.js",
+  "main": "nvs.js",
+  "gypfile": true
+}

@@ -1,0 +1,13 @@
+// src/std/core/io.ns
+
+func print(msg) {
+    @nasi::sys::syscall(1, msg)
+}
+
+func println(msg) {
+    print(msg + "\n")
+}
+
+func exit(code) {
+    @nasi::sys::syscall(60, code)
+}

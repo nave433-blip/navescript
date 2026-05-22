@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>NvsRuntime</id>
+    <version>0.1.0</version>
+    <authors>NaveScript Contributors</authors>
+    <description>NaveScript P/Invoke Binding</description>
+  </metadata>
+</package>

@@ -1,0 +1,15 @@
+// src/std/fs/fs.ns
+import std.core.io
+
+func read_file(path) {
+    let handle = @nasi::fs::open(path, 0)
+    let content = @nasi::fs::read(handle)
+    @nasi::fs::close(handle)
+    return content
+}
+
+func write_file(path, content) {
+    let handle = @nasi::fs::open(path, 1) // Write mode
+    @nasi::fs::write(handle, content)
+    @nasi::fs::close(handle)
+}

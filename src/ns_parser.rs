@@ -871,7 +871,7 @@ impl Parser {
                 Ok(Expr::Greek(GreekExpr::Integral { expr: Box::new(expr), from: None, to: None }))
             }
             TokenType::Stigma => {
-                let expr = self.expression()?;
+                let _expr = self.expression()?;
                 Ok(Expr::Greek(GreekExpr::RandomSample { dist: Distribution::Normal }))
             }
             TokenType::AlphaPsili => {

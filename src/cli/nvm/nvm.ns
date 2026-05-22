@@ -1,0 +1,21 @@
+// navescript/src/cli/nvm/nvm.ns (Refined)
+import std.core.io
+import std.net.http
+
+func main(args) {
+    if (len(args) < 1) {
+        io.println("Usage: nvm <command> [pkg]")
+        io.exit(0)
+    }
+
+    let cmd = args[0]
+    if (cmd == "sync") {
+        io.println("Syncing package registry...")
+        let registry = http.get("https://reg.navescript.org/v1/packages")
+        io.println("Registry manifest updated: " + registry)
+    } else if (cmd == "install") {
+        let pkg = args[1]
+        io.println("Fetching native package: " + pkg)
+        // Logic to download and extract pkg from reg.navescript.org
+    }
+}

@@ -1,0 +1,10 @@
+# NaveScript Python Package Manifest
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nvs-runtime"
+version = "0.1.0"
+description = "NaveScript runtime binding for Python"
+dependencies = []
