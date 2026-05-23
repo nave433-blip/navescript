@@ -1,0 +1,54 @@
+// Native Navescript Shell (nvsh)
+// A sovereign interactive environment for Navescript.
+module nvsh.core;
+
+import std.io;
+import std.os;
+import std.compiler;
+import std.runtime;
+
+pub class Shell {
+    let history: string[] = [];
+    let running: bool = true;
+
+    pub fn start() {
+        println("Nλvescript Shell (nvsh) v0.1.0");
+        println("Type 'exit' to quit.");
+
+        while (this.running) {
+            let prompt = os.getcwd() + " λ ";
+            print(prompt);
+            let line = io.read_line();
+
+            if (line == null || line == "exit") {
+                this.running = false;
+                break;
+            }
+
+            if (line.trim() == "") continue;
+
+            this.execute(line);
+        }
+    }
+
+    fn execute(code: string) {
+        try {
+            // Check if it's a shell command or NvS code
+            if (code.starts_with("!")) {
+                os.exec(code.substring(1));
+            } else {
+                let result = runtime.eval(code);
+                if (result != null) {
+                    println("=> " + result);
+                }
+            }
+        } catch (e) {
+            println("Error: " + e.message);
+        }
+    }
+}
+
+fn main() {
+    let shell = new Shell();
+    shell.start();
+}
