@@ -1,0 +1,53 @@
+// Native Navescript Binary RPC (nvs_grpc)
+// High-performance binary serialization and remote procedure calls.
+module std.rpc.binary;
+
+import std.core;
+import std.net.tcp;
+import std.io.streams;
+
+pub class Message {
+    pub fn serialize() -> bytes {
+        // Native binary serialization logic (Protobuf-style)
+        return ffi::call("nasi.rpc.serialize", [this]);
+    }
+
+    pub fn deserialize(data: bytes) {
+        ffi::call("nasi.rpc.deserialize", [this, data]);
+    }
+}
+
+pub class Client {
+    let stream: TcpStream;
+
+    pub fn connect(addr: string) -> Client {
+        let c = new Client();
+        c.stream = TcpStream.connect(addr);
+        return c;
+    }
+
+    pub fn call<T, R>(method: string, req: T) -> R {
+        let payload = req.serialize();
+        this.stream.write(payload);
+        let res_data = this.stream.read();
+        let res = new R();
+        res.deserialize(res_data);
+        return res;
+    }
+}
+
+pub class Server {
+    let listener: TcpListener;
+
+    pub fn listen(addr: string) {
+        this.listener = TcpListener.bind(addr);
+        while (true) {
+            let conn = this.listener.accept();
+            async { this.handle_conn(conn); };
+        }
+    }
+
+    fn handle_conn(conn: TcpStream) {
+        // Server dispatch logic
+    }
+}

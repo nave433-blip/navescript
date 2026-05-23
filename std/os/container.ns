@@ -1,0 +1,36 @@
+// Native Navescript Containerization (nvs_docker)
+// Leverages NASI sandboxing to provide isolated execution environments.
+module std.os.container;
+
+import std.core;
+import std.fs;
+import std.os;
+
+pub class Container {
+    let id: string;
+    let rootfs: string;
+    let config: any;
+
+    pub fn init(image: string) -> Container {
+        let c = new Container();
+        c.id = uuid.v4();
+        c.rootfs = "/tmp/nvs/containers/" + c.id;
+        fs.mkdir_p(c.rootfs);
+        // Pull and extract image logic
+        ffi::call("nasi.os.container_prepare", [c.id, image, c.rootfs]);
+        return c;
+    }
+
+    pub fn run(cmd: string[], env: Map<string, string>) {
+        println("Starting container " + this.id + "...");
+        ffi::call("nasi.os.container_run", [this.id, this.rootfs, cmd, env]);
+    }
+
+    pub fn stop() {
+        ffi::call("nasi.os.container_stop", [this.id]);
+    }
+
+    pub fn cleanup() {
+        fs.remove_all(this.rootfs);
+    }
+}

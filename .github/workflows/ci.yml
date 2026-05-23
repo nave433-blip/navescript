@@ -1,10 +1,37 @@
-# NaveScript CI/CD Pipeline
+name: Navescript CI
 
-The project uses GitHub Actions for CI/CD.
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
-## Pipeline
-- **Build**: Compiles the project for all targets (Linux, macOS, Windows).
-- **Test**: Runs all unit and integration tests.
-- **Lint**: Checks code quality using `golangci-lint`.
-- **Docs**: Automatically generates and deploys documentation to GitHub Pages.
-- **Release**: Automatically builds binaries and creates a GitHub Release on tag push.
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Install NASM
+      run: sudo apt-get install -y nasm
+
+    - name: Build Navescript
+      run: make build
+
+    - name: Run Core Tests
+      run: ./bin/nvs run tests/core_test.ns
+
+    - name: Run Go Tests
+      run: make test
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: navescript-binaries
+        path: bin/
