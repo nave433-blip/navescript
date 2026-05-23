@@ -1,0 +1,23 @@
+// std/fs/nvs_fs.ns
+// Native Navescript File System Operations
+module std.fs;
+
+pub fn read_file(path: string) -> string {
+    return ffi.call("fs.read_file", [path]);
+}
+
+pub fn write_file(path: string, content: string) {
+    ffi.call("fs.write_file", [path, content]);
+}
+
+pub fn exists(path: string) -> bool {
+    return ffi.call("fs.exists", [path]);
+}
+
+pub fn create_dir(path: string) {
+    ffi.call("fs.create_dir", [path]);
+}
+
+pub fn extract_archive(data: string, dest: string) {
+    ffi.call("fs.extract_archive", [data, dest]);
+}

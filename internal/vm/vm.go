@@ -1,4 +1,4 @@
-// navescript/internal/vm/vm.go (Updated - VM Input/Output Mechanism)
+// navescript/internal/vm/vm.go (Updated - Input Access)
 package vm
 
 import (
@@ -39,6 +39,11 @@ func (vm *VM) currentFrame() *frame.Frame {
 
 func (vm *VM) SetInput(data interface{}) {
 	vm.inputData = data
+}
+
+// GetInput allows Navescript code running in the VM to retrieve the host-provided input.
+func (vm *VM) GetInput() interface{} {
+	return vm.inputData
 }
 
 func (vm *VM) Run() error {

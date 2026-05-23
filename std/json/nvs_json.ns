@@ -1,0 +1,17 @@
+// std/json/nvs_json.ns
+// Native Navescript JSON Serialization
+module std.json;
+
+pub fn encode(val: any) -> string {
+    // Calls into native Rust/Go JSON serializer
+    return ffi.call("json.encode", [val]);
+}
+
+pub fn decode(json_str: string) -> any {
+    // Calls into native Rust/Go JSON deserializer
+    return ffi.call("json.decode", [json_str]);
+}
+
+// Compatibility aliases
+pub fn marshal(val: any) -> string { return encode(val); }
+pub fn unmarshal(json_str: string) -> any { return decode(json_str); }

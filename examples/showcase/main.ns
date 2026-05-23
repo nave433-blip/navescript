@@ -1,0 +1,81 @@
+// Navescript Showcase: "Sovereign Knowledge Hub"
+// This app demonstrates UI, DB, AI, and Async working in harmony.
+module showcase.app;
+
+import std.ui;
+import std.db;
+import std.ai;
+import std.async;
+import std.io;
+
+class KnowledgeHub {
+    let db: Database;
+    let model: Model;
+    let window: Window;
+    let note_input: string = "";
+
+    pub fn init() {
+        // 1. Initialize DB
+        this.db = Database.open("data/hub.db");
+
+        // 2. Load AI Model for note classification
+        this.model = Model.load("models/classifier.nvm");
+
+        // 3. Setup UI
+        this.window = new Window("NvS Knowledge Hub", 800, 600);
+        this.build_ui();
+    }
+
+    fn build_ui() {
+        let layout = new Layout("vertical");
+
+        let title = new Label("Welcome to Sovereign Knowledge Hub");
+        layout.add(title);
+
+        let status = new Label("Status: Ready");
+        layout.add(status);
+
+        let save_btn = new Button("Save & AI Categorize", () => {
+            this.handle_save(status);
+        });
+        layout.add(save_btn);
+
+        this.window.set_content(layout);
+    }
+
+    fn handle_save(status_label: Label) {
+        status_label.set_text("Processing...");
+
+        // Perform DB and AI operations asynchronously
+        async {
+            let note = { "content": "Learn Navescript today!", "timestamp": std.time.now() };
+            
+            // AI Analysis
+            let tensor = new Tensor([1, 10], [0.1, 0.2, ...]); // Dummy input
+            let prediction = this.model.predict(tensor);
+            note["category"] = this.classify(prediction);
+
+            // DB Storage
+            this.db.put("notes", std.uuid.v4(), note);
+
+            // Update UI on main thread (via async closure)
+            status_label.set_text("Note saved and categorized as: " + note["category"]);
+        };
+    }
+
+    fn classify(res: Tensor) -> string {
+        // Logic to interpret AI result
+        return "Coding";
+    }
+
+    pub fn run() {
+        this.window.show();
+        ui.run_app(this.window);
+    }
+}
+
+fn main() {
+    let app = new KnowledgeHub();
+    app.init();
+    app.run();
+}

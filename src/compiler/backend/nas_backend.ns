@@ -1,4 +1,4 @@
-// navescript/src/compiler/backend/nas_backend.ns (Expanded for input/output)
+// navescript/src/compiler/backend/nas_backend.ns (Refined input handling)
 // Native Navescript compiler backend that emits NAS.
 
 import std.json.json
@@ -21,8 +21,7 @@ class NasBackend {
     // New function to process the input AST
     func process_input_ast(json_ast_string) {
         this.ast_input_program = json.parse(json_ast_string)
-        // You might need to reconstruct the AST object from the generic parsed JSON
-        // For simplicity, we assume the JSON structure matches the Navescript AST.
+        // Now Navescript has a native representation of the AST in `ast_input_program`
     }
 
     // Main compile function for the backend
@@ -33,14 +32,15 @@ class NasBackend {
         }
         
         let nas_code = ""
-        for (let node in this.ast_input_program.Statements) { // Assuming AST has .Statements
+        // Assuming ast_input_program is a list/array with a 'Statements' property
+        for (let node in this.ast_input_program.Statements) {
             nas_code = nas_code + this.compile_statement(node)
         }
         return nas_code // This will be the return value of the Navescript VM
     }
 
     func compile_statement(node) {
-        if (node.type == "LET_STATEMENT") {
+        if (node.type == "LET_STATEMENT") { // Assuming JSON parsing creates objects with 'type' property
             let value_code = this.compile_expression(node.value)
             return value_code + "STORE " + this.get_var_addr(node.name.value) + ", R0
 "
@@ -157,8 +157,9 @@ class NasBackend {
 func main(args) {
     let backend = NasBackend.new()
     // Retrieve the JSON stringified AST from the VM's inputData
-    // In Navescript, we would have a way to access `vm.inputData`
-    let ast_json_string = args[0] // Conceptual: assume input data is first arg
+    // In Navescript, we would have a way to access `vm.inputData` directly.
+    // For now, we simulate this by expecting it as the first argument passed to main.
+    let ast_json_string = args[0]
     backend.process_input_ast(ast_json_string)
     return backend.compile_to_nas()
 }
