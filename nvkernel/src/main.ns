@@ -1,0 +1,47 @@
+// main.ns – kernel_main()
+import std.kernel.gdt;
+import std.kernel.idt;
+import std.kernel.interrupt;
+import std.kernel.memory;
+import std.kernel.scheduler;
+import std.kernel.syscall;
+import std.kernel.print;
+import std.kernel.keyboard;
+
+extern fn enable_sse();
+extern fn load_gdt(gdtr: u64);
+extern fn load_idt(idtr: u64);
+
+fn kernel_main(multiboot_magic: u32, multiboot_info: u32) -> i32 {
+    enable_sse();
+    
+    // 1. Setup GDT
+    let gdtr = gdt.init();
+    load_gdt(gdtr);
+    
+    // 2. Setup IDT
+    let idtr = idt.init();
+    load_idt(idtr);
+    interrupt.enable();
+    
+    // 3. Init memory (frame allocator + paging)
+    memory.init(multiboot_info);
+    
+    // 4. Init syscall handler (int 0x80)
+    syscall.init();
+    
+    // 5. Init scheduler (round‑robin)
+    scheduler.init();
+    
+    // 6. Init keyboard (IRQ1)
+    keyboard.init();
+    
+    print.clear();
+    print.write("Navescript Kernel v0.1\n");
+    print.write("Running on x86_64\n");
+    
+    // 7. Start user tasks
+    scheduler.start();
+    
+    return 0;
+}

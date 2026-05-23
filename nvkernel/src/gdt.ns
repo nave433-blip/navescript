@@ -1,0 +1,37 @@
+// gdt.ns – 64‑bit GDT with user mode entries
+module std.kernel.gdt;
+
+struct GDTEntry {
+    limit_low: u16,
+    base_low: u16,
+    base_mid: u8,
+    access: u8,
+    limit_high: u8,
+    base_high: u8,
+}
+
+struct GDTPtr {
+    size: u16,
+    offset: u64,
+}
+
+let gdt: [GDTEntry; 6] = [
+    // null descriptor
+    { limit_low: 0, base_low: 0, base_mid: 0, access: 0, limit_high: 0, base_high: 0 },
+    // kernel code
+    { limit_low: 0xFFFF, base_low: 0, base_mid: 0, access: 0x9A, limit_high: 0xAF, base_high: 0 },
+    // kernel data
+    { limit_low: 0xFFFF, base_low: 0, base_mid: 0, access: 0x92, limit_high: 0xCF, base_high: 0 },
+    // user code
+    { limit_low: 0xFFFF, base_low: 0, base_mid: 0, access: 0xFA, limit_high: 0xAF, base_high: 0 },
+    // user data
+    { limit_low: 0xFFFF, base_low: 0, base_mid: 0, access: 0xF2, limit_high: 0xCF, base_high: 0 },
+    // TSS (to be filled later)
+    { limit_low: 0x0067, base_low: 0, base_mid: 0, access: 0x89, limit_high: 0x40, base_high: 0 },
+];
+
+let gdtr: GDTPtr = { size: (6 * 8 - 1) as u16, offset: &gdt[0] as u64 };
+
+fn init() -> u64 {
+    return &gdtr as u64;
+}

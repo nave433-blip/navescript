@@ -1,0 +1,36 @@
+// syscall.ns – syscall dispatcher
+module std.kernel.syscall;
+
+import std.kernel.print;
+import std.kernel.scheduler;
+import std.kernel.memory;
+import std.kernel.interrupt;
+
+extern fn syscall_handler();
+
+fn init() {
+    // IDT entry 0x80 already set to syscall_handler.
+}
+
+// Called from assembly syscall stub (with registers)
+fn handle_syscall(nr: u32, arg1: u32, arg2: u32, arg3: u32) -> i32 {
+    match nr {
+        0 => { // write
+            let buf = arg1 as *mut u8;
+            let len = arg2;
+            for (let i = 0; i < len; i++) {
+                print.write_char(buf[i]);
+            }
+            return len as i32;
+        }
+        1 => { // yield
+            scheduler.yield();
+            return 0;
+        }
+        2 => { // exit
+            print.write("Task exited\n");
+            while(true) { interrupt.disable(); asm!("hlt"); }
+        }
+        _ => return -1;
+    }
+}

@@ -1,0 +1,68 @@
+// memory.ns – physical frame allocator (bitmap) + identity mapping
+module std.kernel.memory;
+
+import std.kernel.print;
+
+let mem_upper: u32 = 0;   // KB above 1M
+let used_frames: [u32; 1024] = [0]; // 1 bit per 4K frame, max 128MB
+let total_frames: u32 = 0;
+
+fn init(multiboot_info: u32) {
+    // parse Multiboot memory map (simplified)
+    let mmap_addr = *(multiboot_info + 48) as u32;
+    let mmap_length = *(multiboot_info + 44) as u32;
+    let mut mmap = mmap_addr;
+    let mut max_addr = 0;
+    while (mmap < mmap_addr + mmap_length) {
+        let size = *(mmap) as u32;
+        let base = *(mmap + 4) as u64;
+        let length = *(mmap + 12) as u64;
+        if base == 0x100000 {  // 1MB
+            mem_upper = (length / 1024) as u32;
+        }
+        if base + length > max_addr { max_addr = base + length; }
+        mmap += size + 4;
+    }
+    total_frames = (max_addr / 4096) as u32;
+    // Mark used frames (kernel occupies first few MB)
+    let kernel_end = 2 * 1024 * 1024; // assume kernel < 2MB
+    for (let i = 0; i < kernel_end / 4096; i++) {
+        set_frame(i);
+    }
+    print.write("Memory: ");
+    print.write(itoa(total_frames * 4));
+    print.write(" KB available\n");
+}
+
+fn set_frame(frame: u32) {
+    let idx = frame / 32;
+    let bit = frame % 32;
+    used_frames[idx] |= 1 << bit;
+}
+
+fn clear_frame(frame: u32) {
+    let idx = frame / 32;
+    let bit = frame % 32;
+    used_frames[idx] &= ~(1 << bit);
+}
+
+fn test_frame(frame: u32) -> bool {
+    let idx = frame / 32;
+    let bit = frame % 32;
+    return (used_frames[idx] & (1 << bit)) != 0;
+}
+
+fn alloc_frame() -> u32 {
+    for (let i = 0; i < total_frames; i++) {
+        if !test_frame(i) {
+            set_frame(i);
+            return i;
+        }
+    }
+    print.write("Out of memory!\n");
+    return 0xFFFFFFFF;
+}
+
+fn free_frame(frame: u32) {
+    clear_frame(frame);
+}

@@ -1,0 +1,32 @@
+// idt.ns – IDT with 256 entries
+module std.kernel.idt;
+
+struct IDTEntry {
+    offset_low: u16,
+    selector: u16,
+    ist: u8,
+    flags: u8,
+    offset_mid: u16,
+    offset_high: u32,
+    reserved: u32,
+}
+
+let idt: [IDTEntry; 256] = [];
+
+let idtr: struct { size: u16, offset: u64 } = { size: 256 * 16 - 1, offset: &idt[0] as u64 };
+
+// We'll set entries from interrupt.ns
+fn set_entry(n: u32, offset: u64, selector: u16, flags: u8) {
+    let entry = &idt[n];
+    entry.offset_low = (offset & 0xFFFF) as u16;
+    entry.selector = selector;
+    entry.ist = 0;
+    entry.flags = flags;
+    entry.offset_mid = ((offset >> 16) & 0xFFFF) as u16;
+    entry.offset_high = (offset >> 32) as u32;
+    entry.reserved = 0;
+}
+
+fn init() -> u64 {
+    return &idtr as u64;
+}

@@ -1,0 +1,59 @@
+// print.ns – simple VGA text output
+module std.kernel.print;
+
+let vga_buffer = 0xB8000 as *mut u16;
+let cursor_x = 0;
+let cursor_y = 0;
+let color = 0x0F; // white on black
+
+fn write_char(c: u8) {
+    if c == '\n' {
+        cursor_x = 0;
+        cursor_y += 1;
+    } else {
+        let offset = (cursor_y * 80 + cursor_x) as u16;
+        let cell = (color as u16) << 8 | (c as u16);
+        vga_buffer[offset] = cell;
+        cursor_x += 1;
+        if cursor_x >= 80 {
+            cursor_x = 0;
+            cursor_y += 1;
+        }
+    }
+    if cursor_y >= 25 {
+        scroll();
+    }
+}
+
+fn scroll() {
+    // Copy rows 1..24 -> 0..23
+    for (let y = 1; y < 25; y++) {
+        for (let x = 0; x < 80; x++) {
+            let src = (y * 80 + x) as u16;
+            let dst = ((y-1) * 80 + x) as u16;
+            vga_buffer[dst] = vga_buffer[src];
+        }
+    }
+    // Clear last row
+    let last_row = 24 * 80;
+    for (let i = last_row; i < last_row + 80; i++) {
+        vga_buffer[i] = 0x0F00;
+    }
+    cursor_y = 24;
+}
+
+fn write(s: &str) {
+    for (let i = 0; i < s.len(); i++) {
+        write_char(s[i] as u8);
+    }
+}
+
+fn clear() {
+    for (let y = 0; y < 25; y++) {
+        for (let x = 0; x < 80; x++) {
+            vga_buffer[y*80 + x] = 0x0F00;
+        }
+    }
+    cursor_x = 0;
+    cursor_y = 0;
+}

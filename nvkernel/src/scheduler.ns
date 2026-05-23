@@ -1,0 +1,81 @@
+// scheduler.ns – simple task switching
+module std.kernel.scheduler;
+
+import std.kernel.print;
+import std.kernel.memory;
+import std.kernel.interrupt;
+
+struct Task {
+    rip: u64,
+    rsp: u64,
+    pid: u32,
+    state: u8,  // 0 = ready, 1 = running, 2 = waiting
+}
+
+let tasks: [Task; 64] = [];
+let task_count: u32 = 0;
+let current_task: u32 = 0;
+let next_pid: u32 = 1;
+
+// User function entry point (example)
+fn user_task1() {
+    while (true) {
+        print.write("Task 1 running\n");
+        for (let i = 0; i < 1000000; i++) { asm!("pause"); }
+        syscall.yield();
+    }
+}
+
+fn user_task2() {
+    while (true) {
+        print.write("Task 2 running\n");
+        for (let i = 0; i < 1000000; i++) { asm!("pause"); }
+        syscall.yield();
+    }
+}
+
+fn init() {
+    // create kernel idle task (task0)
+    tasks[0] = { rip: 0, rsp: 0, pid: 0, state: 1 };
+    task_count = 1;
+}
+
+fn create_task(entry: u64) -> u32 {
+    let stack = memory.alloc_frame() * 4096 + 4096; // top of page
+    let task = &tasks[task_count];
+    task.rip = entry;
+    task.rsp = stack;
+    task.pid = next_pid++;
+    task.state = 0; // ready
+    task_count++;
+    return task.pid;
+}
+
+fn start() {
+    // create two user tasks
+    create_task(user_task1 as u64);
+    create_task(user_task2 as u64);
+    // enable timer IRQ (for preemption) – optional, here we use cooperative yields
+    interrupt.enable();
+    // jump to first task
+    switch_to_task(0);
+}
+
+// This function is implemented in assembly; we inline it here.
+fn switch_to_task(idx: u32) -> ! {
+    // Save current task's registers (if not first)
+    // Load next task's registers
+    // Use `iretq` for ring3 later.
+    // For simplicity, we just call the function.
+    let task = &tasks[idx];
+    task.state = 1;
+    let fn_ptr = task.rip as fn();
+    fn_ptr();
+    loop {}
+}
+
+fn yield() {
+    let next = (current_task + 1) % task_count;
+    current_task = next;
+    switch_to_task(current_task);
+}

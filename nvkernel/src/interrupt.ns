@@ -1,0 +1,56 @@
+// interrupt.ns – stubs and installation
+module std.kernel.interrupt;
+
+import std.kernel.idt;
+import std.kernel.print;
+import std.kernel.syscall;
+import std.kernel.keyboard;
+import std.kernel.scheduler;
+
+// These are defined in assembly (real interrupt frames)
+extern fn isr_stub_table: [256; u64];
+extern fn irq_stub_table: [16; u64];
+
+fn init() {
+    // 0..31 : CPU exceptions
+    for (let i = 0; i < 32; i++) {
+        idt.set_entry(i, isr_stub_table[i], 0x08, 0x8E); // kernel code, present
+    }
+    // 32..47 : IRQ 0..15
+    for (let i = 0; i < 16; i++) {
+        idt.set_entry(32 + i, irq_stub_table[i], 0x08, 0x8E);
+    }
+    // 0x80 : syscall interrupt
+    extern fn syscall_handler();
+    idt.set_entry(0x80, syscall_handler as u64, 0x08, 0xEE); // user accessible
+}
+
+fn enable() {
+    unsafe { asm!("sti"); }
+}
+
+fn disable() {
+    unsafe { asm!("cli"); }
+}
+
+// Called from assembly ISR (with interrupt frame)
+fn handle_exception(n: u32, error_code: u32, rip: u64) {
+    print.write("Exception ");
+    print.write(itoa(n));
+    print.write(" at ");
+    print.write(hex(rip));
+    print.write("\n");
+    while(true) { asm!("hlt"); }
+}
+
+fn handle_irq(n: u32) {
+    if n == 1 {  // keyboard IRQ1
+        keyboard.handle_irq();
+    }
+    // ... other IRQs
+    // Send EOI to PIC
+    if n >= 8 {
+        outb(0xA0, 0x20);
+    }
+    outb(0x20, 0x20);
+}
