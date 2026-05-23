@@ -1,0 +1,49 @@
+// Native Navescript Kernel Synchronization Primitives
+module std.os.kernel.sync;
+
+import std.os.kernel;
+
+pub class Mutex extends KernelObject {
+    pub fn init() {
+        this.type = "mutex";
+        this.handle = ffi::call("nasi.os.mutex_create", []);
+    }
+
+    pub fn lock() {
+        ffi::call("nasi.os.mutex_lock", [this.handle]);
+    }
+
+    pub fn unlock() {
+        ffi::call("nasi.os.mutex_unlock", [this.handle]);
+    }
+}
+
+pub class Semaphore extends KernelObject {
+    pub fn init(initial_count: number) {
+        this.type = "semaphore";
+        this.handle = ffi::call("nasi.os.semaphore_create", [initial_count]);
+    }
+
+    pub fn post() {
+        ffi::call("nasi.os.semaphore_post", [this.handle]);
+    }
+
+    pub fn wait_sem() {
+        ffi::call("nasi.os.semaphore_wait", [this.handle]);
+    }
+}
+
+pub class Event extends KernelObject {
+    pub fn init(manual_reset: bool) {
+        this.type = "event";
+        this.handle = ffi::call("nasi.os.event_create", [manual_reset]);
+    }
+
+    pub fn set() {
+        ffi::call("nasi.os.event_set", [this.handle]);
+    }
+
+    pub fn reset() {
+        ffi::call("nasi.os.event_reset", [this.handle]);
+    }
+}

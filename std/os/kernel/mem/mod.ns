@@ -1,0 +1,37 @@
+// Native Navescript Low-Level Memory Management
+module std.os.kernel.mem;
+
+import std.os.kernel;
+
+pub class AddressSpace {
+    let handle: any;
+
+    pub fn current() -> AddressSpace {
+        let as = new AddressSpace();
+        as.handle = ffi::call("nasi.os.mem_get_current_as", []);
+        return as;
+    }
+
+    pub fn map(addr: number, size: number, flags: number) {
+        ffi::call("nasi.os.mem_map", [this.handle, addr, size, flags]);
+    }
+
+    pub fn unmap(addr: number, size: number) {
+        ffi::call("nasi.os.mem_unmap", [this.handle, addr, size]);
+    }
+
+    pub fn protect(addr: number, size: number, flags: number) {
+        ffi::call("nasi.os.mem_protect", [this.handle, addr, size, flags]);
+    }
+}
+
+pub class SharedMemory extends KernelObject {
+    pub fn init(size: number) {
+        this.type = "shm";
+        this.handle = ffi::call("nasi.os.shm_create", [size]);
+    }
+
+    pub fn map(offset: number, size: number) -> bytes {
+        return ffi::call("nasi.os.shm_map", [this.handle, offset, size]);
+    }
+}
