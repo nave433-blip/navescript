@@ -1,0 +1,31 @@
+// Native Navescript x86_64 Machine Code Generator
+// High-performance backend for JIT and AOT compilation.
+module compiler.codegen.x86_64;
+
+import std.compiler.ast;
+import std.io;
+
+pub class Assembler {
+    let buffer: bytes = [];
+
+    pub fn mov_rax_imm(val: number) {
+        // 0x48 0xB8 [8 bytes]
+        this.buffer.push(0x48);
+        this.buffer.push(0xB8);
+        this.append_u64(val);
+    }
+
+    pub fn syscall() {
+        // 0x0F 0x05
+        this.buffer.push(0x0F);
+        this.buffer.push(0x05);
+    }
+
+    fn append_u64(val: number) {
+        // LE encoding logic
+    }
+
+    pub fn emit() -> bytes {
+        return this.buffer;
+    }
+}

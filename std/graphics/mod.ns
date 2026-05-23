@@ -1,0 +1,45 @@
+// Native Navescript Graphics Engine (std.graphics)
+// Provides high-performance 2D/3D rendering primitives.
+module std.graphics;
+
+import std.core;
+import std.math.matrix;
+
+pub class Canvas {
+    let handle: any;
+
+    pub fn init(width: number, height: number) {
+        this.handle = ffi::call("nasi.graphics.canvas_create", [width, height]);
+    }
+
+    pub fn clear(color: Color) {
+        ffi::call("nasi.graphics.canvas_clear", [this.handle, color]);
+    }
+
+    pub fn draw_rect(x: number, y: number, w: number, h: number, color: Color) {
+        ffi::call("nasi.graphics.canvas_draw_rect", [this.handle, x, y, w, h, color]);
+    }
+}
+
+pub class Scene3D {
+    let handle: any;
+
+    pub fn add_mesh(mesh: Mesh) {
+        ffi::call("nasi.graphics.scene_add_mesh", [this.handle, mesh.handle]);
+    }
+
+    pub fn render(camera: Camera) {
+        ffi::call("nasi.graphics.scene_render", [this.handle, camera.handle]);
+    }
+}
+
+pub class Color {
+    pub let r: number;
+    pub let g: number;
+    pub let b: number;
+    pub let a: number;
+
+    pub fn init(r: number, g: number, b: number, a: number = 1.0) {
+        this.r = r; this.g = g; this.b = b; this.a = a;
+    }
+}

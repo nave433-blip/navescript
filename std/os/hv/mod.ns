@@ -1,0 +1,41 @@
+// Native Navescript Hypervisor (nvs_vmx)
+// Provides hardware-accelerated virtualization via VT-x/AMD-V.
+module std.os.hv;
+
+import std.core;
+
+pub class VirtualMachine {
+    let handle: any;
+    let config: any;
+
+    pub fn init(memory_mb: number, cpus: number) -> VirtualMachine {
+        let vm = new VirtualMachine();
+        vm.handle = ffi::call("nasi.hv.vm_create", [memory_mb, cpus]);
+        return vm;
+    }
+
+    pub fn load_kernel(path: string) {
+        ffi::call("nasi.hv.vm_load_kernel", [this.handle, path]);
+    }
+
+    pub fn run() {
+        println("Starting Sovereign Virtual Machine...");
+        ffi::call("nasi.hv.vm_run", [this.handle]);
+    }
+
+    pub fn stop() {
+        ffi::call("nasi.hv.vm_stop", [this.handle]);
+    }
+}
+
+pub class VCPU {
+    let id: number;
+    
+    pub fn read_register(reg: string) -> number {
+        return ffi::call("nasi.hv.vcpu_read_reg", [this.id, reg]);
+    }
+
+    pub fn write_register(reg: string, val: number) {
+        ffi::call("nasi.hv.vcpu_write_reg", [this.id, reg, val]);
+    }
+}
