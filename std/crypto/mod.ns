@@ -1,0 +1,31 @@
+// Native Navescript Cryptography (nvs_crypto)
+// Provides secure hashing and encryption primitives.
+module std.crypto;
+
+import std.core;
+
+pub class Sha256 {
+    pub fn hash(data: string) -> string {
+        return ffi::call("nasi.crypto.sha256", [data]);
+    }
+}
+
+pub class Aes {
+    pub fn encrypt(data: string, key: string) -> string {
+        return ffi::call("nasi.crypto.aes_encrypt", [data, key]);
+    }
+
+    pub fn decrypt(data: string, key: string) -> string {
+        return ffi::call("nasi.crypto.aes_decrypt", [data, key]);
+    }
+}
+
+pub class Ed25519 {
+    pub fn sign(data: string, private_key: string) -> string {
+        return ffi::call("nasi.crypto.ed25519_sign", [data, private_key]);
+    }
+
+    pub fn verify(data: string, signature: string, public_key: string) -> bool {
+        return ffi::call("nasi.crypto.ed25519_verify", [data, signature, public_key]);
+    }
+}

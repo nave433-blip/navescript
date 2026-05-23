@@ -1,0 +1,39 @@
+// Native Navescript Multimedia (std.media)
+// Provides low-level access to audio and video playback/processing.
+module std.media;
+
+import std.core;
+
+pub class AudioStream {
+    let handle: any;
+
+    pub fn init(sample_rate: number, channels: number) {
+        this.handle = ffi::call("nasi.media.audio_open", [sample_rate, channels]);
+    }
+
+    pub fn play(data: bytes) {
+        ffi::call("nasi.media.audio_play", [this.handle, data]);
+    }
+
+    pub fn close() {
+        ffi::call("nasi.media.audio_close", [this.handle]);
+    }
+}
+
+pub class Frame {
+    let width: number;
+    let height: number;
+    let data: bytes;
+}
+
+pub class VideoPlayer {
+    let handle: any;
+
+    pub fn load(path: string) {
+        this.handle = ffi::call("nasi.media.video_load", [path]);
+    }
+
+    pub fn next_frame() -> Frame {
+        return ffi::call("nasi.media.video_next_frame", [this.handle]);
+    }
+}

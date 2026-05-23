@@ -219,13 +219,23 @@ test("example test", () => {
             polyglot::show_status()?;
             Ok(())
         }
-        Some(Commands::Fmt { .. }) => {
-            println!("Not yet implemented");
-            Ok(())
+        Some(Commands::Fmt { write }) => {
+            if let Some(file_path) = &cli.file {
+                let code = format!("import std.fmt.formatter; formatter.format({:?}, {});", file_path.to_str().unwrap(), write);
+                package_manager::run_code(code, "fmt_gen.ns", "permissive", 0, 0).await
+            } else {
+                println!("Please provide a file to format.");
+                Ok(())
+            }
         }
-        Some(Commands::Lint { .. }) => {
-            println!("Not yet implemented");
-            Ok(())
+        Some(Commands::Lint { fix: _ }) => {
+            if let Some(file_path) = &cli.file {
+                let code = format!("import std.lint.checker; checker.lint({:?});", file_path.to_str().unwrap());
+                package_manager::run_code(code, "lint_gen.ns", "permissive", 0, 0).await
+            } else {
+                println!("Please provide a file to lint.");
+                Ok(())
+            }
         }
         Some(Commands::Doc { serve: _ }) => {
             if let Some(file_path) = &cli.file {
@@ -241,7 +251,19 @@ test("example test", () => {
             Ok(())
         }
         Some(Commands::Clean) => {
-            println!("Not yet implemented");
+            println!("Cleaning build artifacts...");
+            let project_root = package_manager::find_project_root()?;
+            let target = project_root.join("target");
+            let lib = project_root.join("lib");
+            if target.exists() {
+                fs::remove_dir_all(&target)?;
+                println!("  Removed target/");
+            }
+            if lib.exists() {
+                fs::remove_dir_all(&lib)?;
+                println!("  Removed lib/");
+            }
+            println!("✅ Project cleaned.");
             Ok(())
         }
         Some(Commands::Lsp) => {

@@ -1,0 +1,22 @@
+// Native Navescript Metaprogramming (Macros)
+// Allows for code generation and transformation at compile-time.
+module std.compiler.macros;
+
+import std.compiler.ast;
+
+pub class Macro {
+    let name: string;
+    let transform: fn(ast: AST) -> AST;
+
+    pub fn init(name: string, transform: fn(AST) -> AST) {
+        this.name = name;
+        this.transform = transform;
+    }
+}
+
+pub fn register_macro(m: Macro) {
+    ffi::call("nasi.compiler.register_macro", [m.name, m.transform]);
+}
+
+// Example: A macro that adds logging to every function call
+// macro! log_calls { ... }
