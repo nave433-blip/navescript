@@ -1,0 +1,24 @@
+// Native Navescript FFI interface to Python
+module std.ffi.python;
+
+import std.core;
+
+pub class PythonEngine {
+    let handle: number;
+
+    pub fn init() {
+        this.handle = ffi::call("nasi.sys.load_engine", ["python", "libpython3.so"]);
+    }
+
+    pub fn eval(code: string) -> any {
+        return ffi::call("nasi.ffi.python.eval", [this.handle, code]);
+    }
+
+    pub fn call(funcName: string, args: any[]) -> any {
+        return ffi::call("nasi.ffi.python.call", [this.handle, funcName, args]);
+    }
+
+    pub fn importModule(moduleName: string) -> any {
+        return ffi::call("nasi.ffi.python.import", [this.handle, moduleName]);
+    }
+}

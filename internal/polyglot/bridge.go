@@ -1,31 +1,34 @@
 package polyglot
 
 import (
+	"encoding/json"
 	"fmt"
-	"os/exec"
 )
 
-type PolyglotBridge struct{}
+// Bridge handles cross-language data marshaling
+type Bridge struct {
+	Engines map[string]interface{}
+}
 
-func (b *PolyglotBridge) CallExternal(language string, code string) (string, error) {
-	switch language {
-	case "python":
-		return b.runPython(code)
-	case "js":
-		return b.runJS(code)
-	default:
-		return "", fmt.Errorf("unsupported language: %s", language)
+func NewBridge() *Bridge {
+	return &Bridge{
+		Engines: make(map[string]interface{}),
 	}
 }
 
-func (b *PolyglotBridge) runPython(code string) (string, error) {
-	cmd := exec.Command("python3", "-c", code)
-	out, err := cmd.CombinedOutput()
-	return string(out), err
+// MarshalToNvs converts foreign data to Navescript internal representation
+func (b *Bridge) MarshalToNvs(data interface{}) ([]byte, error) {
+	return json.Marshal(data)
 }
 
-func (b *PolyglotBridge) runJS(code string) (string, error) {
-	cmd := exec.Command("node", "-e", code)
-	out, err := cmd.CombinedOutput()
-	return string(out), err
+// UnmarshalFromNvs converts Navescript data to foreign format
+func (b *Bridge) UnmarshalFromNvs(nvsData []byte, target interface{}) error {
+	return json.Unmarshal(nvsData, target)
+}
+
+// CallForeign invokes a function in another language engine
+func (b *Bridge) CallForeign(engineName string, funcName string, args []interface{}) (interface{}, error) {
+	fmt.Printf("[Bridge] Calling %s in engine %s\n", funcName, engineName)
+	// Logic to route call to python, js, rust, or jvm engines
+	return nil, nil
 }

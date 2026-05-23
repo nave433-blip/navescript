@@ -1,0 +1,14 @@
+# nvs-pkg/pkg.nvs.toml
+# Manifest for a Navescript native package.
+
+[package]
+name = "my-native-lib"
+version = "0.1.0"
+author = "Nave"
+
+[dependencies]
+"std/fs" = "1.0"
+"std/net" = "1.0"
+
+[build]
+target = "nas" # Specify the build target

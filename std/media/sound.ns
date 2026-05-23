@@ -1,0 +1,12 @@
+// Native Navescript Media Hooks
+module std.media.sound;
+
+import std.core;
+
+pub fn play_wav(path: string) {
+    ffi::call("nasi.media.audio_play", [path]);
+}
+
+pub fn set_volume(level: number) {
+    ffi::call("nasi.media.set_volume", [level]);
+}

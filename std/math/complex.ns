@@ -1,0 +1,31 @@
+// Native Navescript Complex Math
+module std.math.complex;
+
+pub class Complex {
+    pub let real: number;
+    pub let imag: number;
+
+    pub fn init(real: number, imag: number) {
+        this.real = real;
+        this.imag = imag;
+    }
+
+    pub fn add(other: Complex) -> Complex {
+        return new Complex(this.real + other.real, this.imag + other.imag);
+    }
+
+    pub fn sub(other: Complex) -> Complex {
+        return new Complex(this.real - other.real, this.imag - other.imag);
+    }
+
+    pub fn mul(other: Complex) -> Complex {
+        let r = this.real * other.real - this.imag * other.imag;
+        let i = this.real * other.imag + this.imag * other.real;
+        return new Complex(r, i);
+    }
+
+    pub fn abs() -> number {
+        // Calls native Math.sqrt
+        return ffi::call("nasi.math.sqrt", [this.real * this.real + this.imag * this.imag]);
+    }
+}

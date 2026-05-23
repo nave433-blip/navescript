@@ -1,0 +1,21 @@
+// Native Navescript FFI interface to Java/JVM
+module std.ffi.java;
+
+import std.core;
+
+pub class JVMEngine {
+    let handle: number;
+
+    pub fn init(classpath: string[]) {
+        this.handle = ffi::call("nasi.sys.load_engine", ["jvm", "libjvm.so"]);
+        ffi::call("nasi.ffi.java.set_classpath", [this.handle, classpath]);
+    }
+
+    pub fn newObject(className: string, args: any[]) -> any {
+        return ffi::call("nasi.ffi.java.new", [this.handle, className, args]);
+    }
+
+    pub fn callMethod(objHandle: any, methodName: string, args: any[]) -> any {
+        return ffi::call("nasi.ffi.java.call_method", [this.handle, objHandle, methodName, args]);
+    }
+}

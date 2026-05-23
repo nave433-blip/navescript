@@ -1,0 +1,72 @@
+// NaveScript Crate System (Nave Crate / NvC)
+// Functionally equivalent to Rust's Cargo
+module internal.packager.nvc;
+
+import std.fs;
+import std.json;
+import std.core;
+import std.net.http;
+import std.fs.path;
+
+pub class PackageManifest {
+    pub let name: string;
+    pub let version: string;
+    pub let authors: string[];
+    pub let dependencies: Map<string, string>;
+    pub let registry: string;
+}
+
+pub class PackageManager {
+    let registryUrl: string = "https://reg.navescript.org/api/v1/crates";
+    let cacheDir: string = ".navescript/cache";
+
+    pub fn init() {
+        fs.mkdir(this.cacheDir);
+    }
+
+    pub fn parseManifest(manifestPath: string) -> PackageManifest {
+        let content = fs.read(manifestPath);
+        if (content == null) {
+            core.panic("Failed to read " + manifestPath);
+        }
+        return json.unmarshal(content);
+    }
+
+    pub fn resolveDependencies(manifest: PackageManifest) {
+        core.println("Resolving dependencies for " + manifest.name + " v" + manifest.version);
+        for (let depName in manifest.dependencies) {
+            let versionReq = manifest.dependencies[depName];
+            this.fetchPackage(depName, versionReq);
+        }
+    }
+
+    fn fetchPackage(name: string, version: string) {
+        let packagePath = path.join([this.cacheDir, name + "-" + version]);
+        if (fs.exists(packagePath)) {
+            core.println("  Cached: " + name + " v" + version);
+            return;
+        }
+
+        core.println("  Downloading: " + name + " v" + version + "...");
+        let url = this.registryUrl + "/" + name + "/" + version + "/download";
+        let response = http.Client.get(url);
+        
+        if (response.statusCode == 200) {
+            fs.write(packagePath + ".tar.gz", response.body);
+            // Native FFI call to extract archive
+            ffi::call("nasi.archive.extract", [packagePath + ".tar.gz", packagePath]);
+            core.println("  Installed: " + name + " v" + version);
+        } else {
+            core.panic("Failed to download package " + name + ": " + response.statusCode);
+        }
+    }
+
+    pub fn build(manifestPath: string) {
+        let manifest = this.parseManifest(manifestPath);
+        this.resolveDependencies(manifest);
+        core.println("Building crate " + manifest.name + "...");
+        // FFI call to compiler engine
+        ffi::call("nasi.compiler.build_crate", [manifestPath]);
+        core.println("Build complete.");
+    }
+}

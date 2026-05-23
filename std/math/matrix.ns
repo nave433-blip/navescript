@@ -1,0 +1,41 @@
+// Native Navescript Matrix Math
+module std.math.matrix;
+
+import std.core;
+
+pub class Matrix {
+    pub let rows: number;
+    pub let cols: number;
+    let data: number[];
+
+    pub fn init(rows: number, cols: number) {
+        this.rows = rows;
+        this.cols = cols;
+        // Initialize with zeros natively via FFI
+        this.data = ffi::call("nasi.array.create_zeros", [rows * cols]);
+    }
+
+    pub fn get(row: number, col: number) -> number {
+        if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) {
+            core.panic("Matrix index out of bounds");
+        }
+        return this.data[row * this.cols + col];
+    }
+
+    pub fn set(row: number, col: number, val: number) {
+        if (row < 0 || row >= this.rows || col < 0 || col >= this.cols) {
+            core.panic("Matrix index out of bounds");
+        }
+        this.data[row * this.cols + col] = val;
+    }
+
+    pub fn add(other: Matrix) -> Matrix {
+        if (this.rows != other.rows || this.cols != other.cols) {
+            core.panic("Matrix dimensions mismatch for addition");
+        }
+        let result = new Matrix(this.rows, this.cols);
+        // Offload matrix addition to optimized native backend (SIMD/BLAS)
+        ffi::call("nasi.math.matrix_add", [this.data, other.data, result.data, this.rows * this.cols]);
+        return result;
+    }
+}

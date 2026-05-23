@@ -1,0 +1,35 @@
+// Native Navescript WASI Networking
+module std.wasi.net;
+
+import std.core;
+
+pub enum AddressFamily {
+    INET = 1,
+    INET6 = 2
+}
+
+pub class Socket {
+    let handle: number;
+
+    pub fn open(af: AddressFamily) -> Socket {
+        let s = new Socket();
+        s.handle = ffi::call("wasi.sock_open", [af]);
+        return s;
+    }
+
+    pub fn bind(addr: string, port: number) {
+        ffi::call("wasi.sock_bind", [this.handle, addr, port]);
+    }
+
+    pub fn send(data: string) -> number {
+        return ffi::call("wasi.sock_send", [this.handle, data]);
+    }
+
+    pub fn recv(len: number) -> string {
+        return ffi::call("wasi.sock_recv", [this.handle, len]);
+    }
+
+    pub fn close() {
+        ffi::call("wasi.sock_close", [this.handle]);
+    }
+}

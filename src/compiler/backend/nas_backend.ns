@@ -1,0 +1,164 @@
+// navescript/src/compiler/backend/nas_backend.ns (Expanded for input/output)
+// Native Navescript compiler backend that emits NAS.
+
+import std.json.json
+import std.core.io
+
+class NasBackend {
+    next_label_id,
+    ast_input_program // New field to store the input AST
+
+    func new() {
+        return NasBackend(next_label_id: 0)
+    }
+
+    func generate_label(prefix) {
+        let label = prefix + "_" + this.next_label_id
+        this.next_label_id = this.next_label_id + 1
+        return label
+    }
+
+    // New function to process the input AST
+    func process_input_ast(json_ast_string) {
+        this.ast_input_program = json.parse(json_ast_string)
+        // You might need to reconstruct the AST object from the generic parsed JSON
+        // For simplicity, we assume the JSON structure matches the Navescript AST.
+    }
+
+    // Main compile function for the backend
+    func compile_to_nas() {
+        if (this.ast_input_program == nil) {
+            io.println("Error: No input AST provided to nas_backend.")
+            return ""
+        }
+        
+        let nas_code = ""
+        for (let node in this.ast_input_program.Statements) { // Assuming AST has .Statements
+            nas_code = nas_code + this.compile_statement(node)
+        }
+        return nas_code // This will be the return value of the Navescript VM
+    }
+
+    func compile_statement(node) {
+        if (node.type == "LET_STATEMENT") {
+            let value_code = this.compile_expression(node.value)
+            return value_code + "STORE " + this.get_var_addr(node.name.value) + ", R0
+"
+        } else if (node.type == "EXPRESSION_STATEMENT") {
+            return this.compile_expression(node.expression) + "POP R0
+" // Discard result
+        } else if (node.type == "IF_STATEMENT") {
+            let condition_code = this.compile_expression(node.condition)
+            let else_label = this.generate_label("ELSE")
+            let end_if_label = this.generate_label("END_IF")
+
+            let consequence_code = ""
+            for (let stmt in node.consequence.statements) {
+                consequence_code = consequence_code + this.compile_statement(stmt)
+            }
+
+            let alternative_code = ""
+            if (node.alternative != nil) {
+                for (let stmt in node.alternative.statements) {
+                    alternative_code = alternative_code + this.compile_statement(stmt)
+                }
+            }
+
+            return condition_code +
+                   "JZ R0, " + else_label + "
+" + // If condition is false, jump to ELSE
+                   consequence_code +
+                   "JMP " + end_if_label + "
+" +
+                   else_label + ":
+" +
+                   alternative_code +
+                   end_if_label + ":
+"
+        } else if (node.type == "RETURN_STATEMENT") {
+            let value_code = this.compile_expression(node.return_value)
+            return value_code + "RET R0
+"
+        } else if (node.type == "FUNCTION_LITERAL") {
+            let func_label = this.generate_label("FUNC_" + node.name)
+            let body_code = ""
+            for (let stmt in node.body.statements) {
+                body_code = body_code + this.compile_statement(stmt)
+            }
+            return func_label + ":
+" +
+                   "PUSH BP
+" + // Standard function prologue
+                   "MOV BP, SP
+" +
+                   body_code +
+                   "POP BP
+" + // Standard function epilogue
+                   "RET
+"
+        }
+        return ""
+    }
+
+    func compile_expression(node) {
+        if (node.type == "INTEGER_LITERAL") {
+            return "LI R0, " + node.value + "
+" // Result in R0
+        } else if (node.type == "IDENTIFIER") {
+            // Load variable value into R0
+            return "LOAD R0, " + this.get_var_addr(node.value) + "
+"
+        } else if (node.type == "INFIX_EXPRESSION") {
+            let left_code = this.compile_expression(node.left)
+            let right_code = this.compile_expression(node.right)
+            let op_instruction = this.get_op_instruction(node.operator)
+            
+            // Push left result, then compute right, then pop left and apply op
+            return left_code + "PUSH R0
+" +
+                   right_code + "POP R1
+" + // R0 has right, R1 has left
+                   op_instruction + " R0, R1, R0
+" // Result in R0
+        } else if (node.type == "CALL_EXPRESSION") {
+            let args_code = ""
+            for (let arg in node.arguments) {
+                args_code = args_code + this.compile_expression(arg) + "PUSH R0
+" // Push arg onto stack
+            }
+            // Assume function name is identifier
+            return args_code + "CALL " + node.function.value + "
+"
+        }
+        return ""
+    }
+
+    func get_op_instruction(operator) {
+        if (operator == "+") { return "ADD" }
+        if (operator == "-") { return "SUB" }
+        if (operator == "*") { return "MUL" }
+        if (operator == "/") { return "DIV" }
+        // ... more operators ...
+        return ""
+    }
+
+    var_map: {},
+    var_count: 0,
+    func get_var_addr(name) {
+        if (this.var_map[name] == nil) {
+            this.var_map[name] = this.var_count
+            this.var_count = this.var_count + 1
+        }
+        return "R15 + " + (this.var_map[name] * 8) // Each var is 8 bytes (u64)
+    }
+}
+
+// Entry point for the nas_backend.ns when run by the Go VM
+func main(args) {
+    let backend = NasBackend.new()
+    // Retrieve the JSON stringified AST from the VM's inputData
+    // In Navescript, we would have a way to access `vm.inputData`
+    let ast_json_string = args[0] // Conceptual: assume input data is first arg
+    backend.process_input_ast(ast_json_string)
+    return backend.compile_to_nas()
+}

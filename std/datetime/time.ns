@@ -1,0 +1,32 @@
+// Native Navescript DateTime Module
+module std.datetime.time;
+
+pub class Time {
+    pub let unixMillis: number;
+
+    pub fn init() {
+        this.unixMillis = ffi::call("nasi.time.now", []);
+    }
+
+    pub fn fromMillis(ms: number) {
+        this.unixMillis = ms;
+    }
+
+    pub fn format(pattern: string) -> string {
+        return ffi::call("nasi.time.format", [this.unixMillis, pattern]);
+    }
+
+    pub fn add(millis: number) -> Time {
+        let t = new Time();
+        t.fromMillis(this.unixMillis + millis);
+        return t;
+    }
+
+    pub fn sub(other: Time) -> number {
+        return this.unixMillis - other.unixMillis;
+    }
+}
+
+pub fn sleep(millis: number) {
+    ffi::call("nasi.time.sleep", [millis]);
+}

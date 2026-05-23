@@ -26,6 +26,7 @@ pub mod cranelift_backend;
 pub mod sandbox;
 pub use sandbox::Sandbox;
 pub mod types;
+pub mod package_manager;
 
 pub use parser::NaveProgram;
 pub use runtime::NaveRuntime;

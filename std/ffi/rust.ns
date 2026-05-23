@@ -1,0 +1,17 @@
+// Native Navescript FFI interface to Rust/C ABI
+module std.ffi.rust;
+
+import std.core;
+
+pub class RustEngine {
+    let handle: number;
+
+    pub fn init(dylibPath: string) {
+        this.handle = ffi::call("nasi.sys.load_engine", ["rust", dylibPath]);
+    }
+
+    // Call a Rust extern "C" function
+    pub fn call(funcName: string, args: any[]) -> any {
+        return ffi::call("nasi.ffi.c_abi.call", [this.handle, funcName, args]);
+    }
+}

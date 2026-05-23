@@ -1,0 +1,37 @@
+// Native Navescript Vector Collection
+module std.collections.vector;
+
+import std.core;
+
+pub class Vector<T> {
+    let internal_handle: any;
+    pub let length: number = 0;
+
+    pub fn init() {
+        this.internal_handle = ffi::call("nasi.vector.new", []);
+    }
+
+    pub fn push(element: T) {
+        ffi::call("nasi.vector.push", [this.internal_handle, element]);
+        this.length = ffi::call("nasi.vector.len", [this.internal_handle]);
+    }
+
+    pub fn pop() -> T {
+        let el = ffi::call("nasi.vector.pop", [this.internal_handle]);
+        this.length = ffi::call("nasi.vector.len", [this.internal_handle]);
+        return el;
+    }
+
+    pub fn get(index: number) -> T {
+        return ffi::call("nasi.vector.get", [this.internal_handle, index]);
+    }
+
+    pub fn set(index: number, element: T) {
+        ffi::call("nasi.vector.set", [this.internal_handle, index, element]);
+    }
+
+    pub fn clear() {
+        ffi::call("nasi.vector.clear", [this.internal_handle]);
+        this.length = 0;
+    }
+}

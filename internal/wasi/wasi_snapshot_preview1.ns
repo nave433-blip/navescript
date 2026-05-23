@@ -1,0 +1,49 @@
+// WASI Snapshot Preview 1 Bindings for Navescript
+// Equivalent to wasi_snapshot_preview1 API
+module internal.wasi.preview1;
+
+import std.core;
+
+// Standard WASI error codes
+pub enum Errno {
+    SUCCESS = 0,
+    E2BIG = 1,
+    EACCES = 2,
+    EADDRINUSE = 3,
+    // ...
+    ENOENT = 44,
+    // ...
+}
+
+pub class WasiBindings {
+    
+    // fd_read
+    pub fn fd_read(fd: number, iovs: any, iovs_len: number, nread: any) -> Errno {
+        return ffi::call("wasi_snapshot_preview1.fd_read", [fd, iovs, iovs_len, nread]);
+    }
+
+    // fd_write
+    pub fn fd_write(fd: number, iovs: any, iovs_len: number, nwritten: any) -> Errno {
+        return ffi::call("wasi_snapshot_preview1.fd_write", [fd, iovs, iovs_len, nwritten]);
+    }
+
+    // args_get
+    pub fn args_get(argv: any, argv_buf: any) -> Errno {
+        return ffi::call("wasi_snapshot_preview1.args_get", [argv, argv_buf]);
+    }
+
+    // args_sizes_get
+    pub fn args_sizes_get(argc: any, argv_buf_size: any) -> Errno {
+        return ffi::call("wasi_snapshot_preview1.args_sizes_get", [argc, argv_buf_size]);
+    }
+
+    // environ_get
+    pub fn environ_get(environ: any, environ_buf: any) -> Errno {
+        return ffi::call("wasi_snapshot_preview1.environ_get", [environ, environ_buf]);
+    }
+
+    // proc_exit
+    pub fn proc_exit(rval: number) {
+        ffi::call("wasi_snapshot_preview1.proc_exit", [rval]);
+    }
+}

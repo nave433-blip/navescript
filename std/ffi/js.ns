@@ -1,0 +1,20 @@
+// Native Navescript FFI interface to JavaScript (V8/QuickJS)
+module std.ffi.js;
+
+import std.core;
+
+pub class JSEngine {
+    let handle: number;
+
+    pub fn init() {
+        this.handle = ffi::call("nasi.sys.load_engine", ["js", "libv8.so"]);
+    }
+
+    pub fn eval(code: string) -> any {
+        return ffi::call("nasi.ffi.js.eval", [this.handle, code]);
+    }
+
+    pub fn call(funcName: string, args: any[]) -> any {
+        return ffi::call("nasi.ffi.js.call", [this.handle, funcName, args]);
+    }
+}

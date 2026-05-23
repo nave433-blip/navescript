@@ -1,0 +1,40 @@
+// Nave Crate (Nvc) - Navescript's Project Orchestrator
+module std.pm.nvc;
+
+import std.core;
+import std.fs;
+import std.json;
+import std.net.http;
+
+pub class Nvc {
+    pub fn init(project_name: string) {
+        core.println("Initializing Navescript project: " + project_name);
+        fs.mkdir(project_name);
+        fs.mkdir(project_name + "/src");
+        fs.write(project_name + "/navescript.json", json.marshal({
+            "name": project_name,
+            "version": "0.1.0",
+            "dependencies": {}
+        }));
+        fs.write(project_name + "/src/main.ns", "pub fn main() {\n    core.println(\"Hello from Navescript!\");\n}\n");
+    }
+
+    pub fn build() {
+        core.println("Building project...");
+        // Call native compiler to generate IR/Object files
+        ffi::call("nasi.compiler.compile", ["."]);
+    }
+
+    pub fn run() {
+        this.build();
+        core.println("Running...");
+        ffi::call("nasi.vm.execute", ["./bin/project.nave"]);
+    }
+
+    pub fn add(dep_name: string, version: string) {
+        let manifest = json.unmarshal(fs.read("navescript.json"));
+        manifest.dependencies[dep_name] = version;
+        fs.write("navescript.json", json.marshal(manifest));
+        core.println("Added dependency: " + dep_name);
+    }
+}

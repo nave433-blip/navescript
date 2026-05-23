@@ -1,28 +1,11 @@
 use clap::{Parser as ClapParser, Subcommand};
-use anyhow::{Result, Context};
+use anyhow::{Result};
 use std::fs;
 use std::path::PathBuf;
-use navescript::runtime;
 use navescript::parser;
 use navescript::ir;
-use navescript::ns_lexer;
-use navescript::ns_parser;
-use navescript::ns_compiler;
 use navescript::polyglot;
-use navescript::stdlib;
-
-async fn run_ns_script(runtime: &mut runtime::NaveRuntime, source: &str, filename: &str) -> Result<()> {
-    let ir = {
-        let mut lexer = ns_lexer::Lexer::new(source.to_string());
-        let tokens = lexer.scan_tokens().map_err(|e| anyhow::anyhow!(e))?;
-        let mut parser = ns_parser::Parser::new(tokens);
-        let stmts = parser.parse().map_err(|e| anyhow::anyhow!(e))?;
-        let mut compiler = ns_compiler::TargetCompiler::new();
-        compiler.compile(&stmts)
-    };
-    runtime.run_wasm_target(&ir).await?;
-    Ok(())
-}
+use navescript::package_manager;
 
 #[derive(ClapParser)]
 #[command(name = "navescript")]
@@ -58,9 +41,10 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Execute a .ns or .nave file
+    /// Execute a .ns or .nave file, or run the current project
     Run {
-        file: PathBuf,
+        #[arg()]
+        file: Option<PathBuf>,
         /// Sandbox mode
         #[arg(long, default_value = "permissive")]
         sandbox: String,
@@ -77,7 +61,7 @@ enum Commands {
     },
     /// Start interactive REPL
     Repl,
-    /// Run test suite
+    /// Run test suite for the current project
     Test {
         #[arg(long)]
         filter: Option<String>,
@@ -111,10 +95,8 @@ enum Commands {
     Init {
         name: String,
     },
-    /// Install packages
-    Install {
-        package: String,
-    },
+    /// Install packages from nvs.toml
+    Install,
     /// Publish package
     Publish {
         #[arg(long)]
@@ -130,18 +112,87 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Some(Commands::Run { file, sandbox, timeout, memory_limit }) => {
-            let source = fs::read_to_string(file)?;
-            run_code(source, file.to_str().unwrap(), sandbox, *timeout, *memory_limit).await
+            if let Some(file_path) = file {
+                let source = fs::read_to_string(file_path)?;
+                package_manager::run_code(source, file_path.to_str().unwrap(), sandbox, *timeout, *memory_limit).await
+            } else {
+                package_manager::run_project().await
+            }
         }
         Some(Commands::Eval { code }) => {
-            run_code(code.clone(), "eval.ns", "permissive", 30000, 512).await
+            package_manager::run_code(code.clone(), "eval.ns", "permissive", 30000, 512).await
+        }
+        Some(Commands::Test { filter }) => {
+            package_manager::test_project(filter).await
+        }
+        Some(Commands::Repl) => {
+            println!("Nλvescript v3.0.0 Interactive REPL");
+            let mut rl = rustyline::DefaultEditor::new()?;
+            loop {
+                match rl.readline("nλ > ") {
+                    Ok(line) => {
+                        let _ = rl.add_history_entry(&line);
+                        if line == "exit" || line == "quit" { break; }
+                        let res = package_manager::run_code(line, "repl.ns", "permissive", 30000, 512).await;
+                        if let Err(e) = res { println!("Error: {}", e); }
+                    }
+                    Err(_) => break,
+                }
+            }
+            Ok(())
+        }
+        Some(Commands::Init { name }) => {
+            let project_path = PathBuf::from(name);
+            if project_path.exists() {
+                anyhow::bail!("destination `{}` already exists", name);
+            }
+
+            println!("Creating new Navescript project: {}", name);
+
+            fs::create_dir_all(&project_path)?;
+            let src_path = project_path.join("src");
+            fs::create_dir(&src_path)?;
+            let tests_path = project_path.join("tests");
+            fs::create_dir(&tests_path)?;
+
+            let nvs_toml_content = format!(
+                r#"[package]
+name = "{}"
+version = "0.1.0"
+authors = ["Your Name <you@example.com>"]
+[dependencies]
+"#,
+                name
+            );
+            fs::write(project_path.join("nvs.toml"), nvs_toml_content)?;
+
+            let main_ns_content = "func main() {\n    console.log(\"Hello, world!\");\n}\n";
+            fs::write(src_path.join("main.ns"), main_ns_content)?;
+            
+            let test_main_ns_content = r#"// tests/main.ns
+import std.test.testing;
+test("example test", () => {
+    assert_eq(1 + 1, 2);
+});
+"#;
+            fs::write(tests_path.join("main.ns"), test_main_ns_content)?;
+
+            let gitignore_content = "/target\n/lib\nnvs.lock\n";
+            fs::write(project_path.join(".gitignore"), gitignore_content)?;
+
+            println!("Project `{}` created successfully.", name);
+
+            Ok(())
+        }
+        Some(Commands::Install) => {
+            package_manager::install()
         }
         Some(Commands::Compile { file, output }) => {
             let source = fs::read_to_string(file)?;
             let prog = parser::parse(&source)?;
             let ir = ir::NSIr::from_program(&prog);
             let json = serde_json::to_string_pretty(&ir)?;
-            
+
             if let Some(out_path) = output {
                 fs::write(out_path, json)?;
             } else {
@@ -153,96 +204,34 @@ async fn main() -> Result<()> {
             polyglot::show_status()?;
             Ok(())
         }
-        Some(Commands::Repl) => {
-            println!("Nλvescript v3.0.0 Interactive REPL");
-            let mut rl = rustyline::DefaultEditor::new()?;
-            loop {
-                match rl.readline("nλ > ") {
-                    Ok(line) => {
-                        let _ = rl.add_history_entry(&line);
-                        if line == "exit" || line == "quit" { break; }
-                        let res = run_code(line, "repl.ns", "permissive", 30000, 512).await;
-                        if let Err(e) = res { println!("Error: {}", e); }
-                    }
-                    Err(_) => break,
-                }
-            }
+        Some(Commands::Fmt { .. }) => {
+            println!("Not yet implemented");
             Ok(())
         }
-        Some(Commands::Fmt { write }) => {
-            if let Some(file_path) = &cli.file {
-                let source = fs::read_to_string(file_path)?;
-                let prog = parser::parse(&source)?;
-                let formatted = format!("{:#?}", prog);
-                if *write {
-                    fs::write(file_path, formatted)?;
-                    println!("Formatted {}", file_path.display());
-                } else {
-                    println!("{}", formatted);
-                }
-            } else {
-                println!("Please provide a file to format.");
-            }
+        Some(Commands::Lint { .. }) => {
+            println!("Not yet implemented");
             Ok(())
         }
-        Some(Commands::Lint { fix: _ }) => {
-            if let Some(file_path) = &cli.file {
-                let source = fs::read_to_string(file_path)?;
-                let prog = parser::parse(&source)?;
-                for step in &prog.steps {
-                    if step.op == "fn" {
-                        println!("Warning: Function identified in step '{}'.", step.id.as_deref().unwrap_or("unknown"));
-                    }
-                }
-            } else {
-                println!("Please provide a file to lint.");
-            }
-            Ok(())
-        }
-        Some(Commands::Doc { serve: _ }) => {
-            if let Some(file_path) = &cli.file {
-                let source = fs::read_to_string(file_path)?;
-                let prog = parser::parse(&source)?;
-                println!("Documentation for {}:", file_path.display());
-                for step in &prog.steps {
-                    if step.op == "fn" {
-                        println!(" - Function: {}", step.id.as_deref().unwrap_or("unnamed"));
-                    }
-                }
-            } else {
-                println!("Please provide a file to generate docs for.");
-            }
-            Ok(())
-        }
-        Some(Commands::Init { name }) => {
-            println!("Initializing project: {}", name);
-            Ok(())
-        }
-        Some(Commands::Install { package }) => {
-            println!("Installing package: {}", package);
+        Some(Commands::Doc { .. }) => {
+            println!("Not yet implemented");
             Ok(())
         }
         Some(Commands::Publish { .. }) => {
-            println!("Publishing package...");
+            println!("Not yet implemented");
             Ok(())
         }
         Some(Commands::Clean) => {
-            println!("Cleaning build artifacts...");
-            Ok(())
-        }
-        Some(Commands::Test { filter }) => {
-            println!("Running tests (filter: {:?})...", filter);
+            println!("Not yet implemented");
             Ok(())
         }
         Some(Commands::Lsp) => {
-            println!("Starting LSP server...");
+            println!("Not yet implemented");
             Ok(())
         }
         None => {
             if let Some(file_path) = &cli.file {
-                let source = fs::read_to_string(file_path)
-                    .with_context(|| format!("Failed to read file: {:?}", file_path))?;
-                run_code(source, file_path.to_str().unwrap(), "permissive", 30000, 512).await
+                let source = fs::read_to_string(file_path)?;
+                package_manager::run_code(source, file_path.to_str().unwrap(), "permissive", 30000, 512).await
             } else {
                 println!("Nλvescript v3.0.0");
                 println!("Usage: navescript <command> [options] or navescript <file.ns>");
@@ -250,36 +239,4 @@ async fn main() -> Result<()> {
             }
         }
     }
-}
-
-async fn run_code(source: String, filename: &str, sandbox_mode: &str, _timeout_ms: u64, _memory_mb: u64) -> Result<()> {
-    let sandbox = match sandbox_mode {
-        "strict" => navescript::Sandbox::strict(),
-        "permissive" => navescript::Sandbox::permissive(),
-        _ => navescript::Sandbox::permissive(),
-    };
-
-    let mut runtime = runtime::NaveRuntime::new(Some(sandbox))?;
-
-    // Bootstrap the standard library
-    for (name, script) in stdlib::bootstrap::get_bootstrap_scripts() {
-        if let Err(e) = run_ns_script(&mut runtime, script, name).await {
-            eprintln!("Failed to load bootstrap script {}: {}", name, e);
-        }
-    }
-
-    let ir = if filename.ends_with(".ns") {
-        let mut lexer = ns_lexer::Lexer::new(source);
-        let tokens = lexer.scan_tokens().map_err(|e| anyhow::anyhow!(e))?;
-        let mut parser = ns_parser::Parser::new(tokens);
-        let stmts = parser.parse().map_err(|e| anyhow::anyhow!(e))?;
-        let mut compiler = ns_compiler::TargetCompiler::new();
-        compiler.compile(&stmts)
-    } else {
-        let prog = parser::parse(&source)?;
-        ir::NSIr::from_program(&prog).body
-    };
-
-    runtime.run_wasm_target(&ir).await?;
-    Ok(())
 }

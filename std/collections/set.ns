@@ -1,0 +1,33 @@
+// Native Navescript Set Collection
+module std.collections.set;
+
+import std.core;
+
+pub class Set<T> {
+    let internalSet: any;
+    pub let size: number = 0;
+
+    pub fn init() {
+        this.internalSet = ffi::call("nasi.set.create", []);
+    }
+
+    pub fn add(value: T) {
+        let isNew = ffi::call("nasi.set.add", [this.internalSet, value]);
+        if (isNew) this.size++;
+    }
+
+    pub fn has(value: T) -> bool {
+        return ffi::call("nasi.set.has", [this.internalSet, value]);
+    }
+
+    pub fn delete(value: T) -> bool {
+        let deleted = ffi::call("nasi.set.delete", [this.internalSet, value]);
+        if (deleted) this.size--;
+        return deleted;
+    }
+
+    pub fn clear() {
+        ffi::call("nasi.set.clear", [this.internalSet]);
+        this.size = 0;
+    }
+}

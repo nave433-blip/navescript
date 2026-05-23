@@ -1,0 +1,30 @@
+// Native Navescript Threading (Green Threads / Coroutines)
+module std.thread;
+
+import std.core;
+
+pub class Thread {
+    let handle: number;
+
+    pub fn spawn(target: fn()) -> Thread {
+        let t = new Thread();
+        t.handle = ffi::call("nasi.thread.spawn", [target]);
+        return t;
+    }
+
+    pub fn join() -> any {
+        return ffi::call("nasi.thread.join", [this.handle]);
+    }
+
+    pub fn isAlive() -> bool {
+        return ffi::call("nasi.thread.is_alive", [this.handle]);
+    }
+}
+
+pub fn yield() {
+    ffi::call("nasi.thread.yield", []);
+}
+
+pub fn sleep(ms: number) {
+    ffi::call("nasi.thread.sleep", [ms]);
+}

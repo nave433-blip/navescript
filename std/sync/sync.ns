@@ -1,0 +1,40 @@
+// Native Navescript Concurrent Synchronization Primitives
+module std.sync;
+
+import std.core;
+
+pub class Mutex {
+    let handle: any;
+
+    pub fn init() {
+        this.handle = ffi::call("nasi.sync.mutex_new", []);
+    }
+
+    pub fn lock() {
+        ffi::call("nasi.sync.mutex_lock", [this.handle]);
+    }
+
+    pub fn unlock() {
+        ffi::call("nasi.sync.mutex_unlock", [this.handle]);
+    }
+}
+
+pub class WaitGroup {
+    let handle: any;
+
+    pub fn init() {
+        this.handle = ffi::call("nasi.sync.waitgroup_new", []);
+    }
+
+    pub fn add(delta: number) {
+        ffi::call("nasi.sync.waitgroup_add", [this.handle, delta]);
+    }
+
+    pub fn done() {
+        ffi::call("nasi.sync.waitgroup_add", [this.handle, -1]);
+    }
+
+    pub fn wait() {
+        ffi::call("nasi.sync.waitgroup_wait", [this.handle]);
+    }
+}

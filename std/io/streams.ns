@@ -1,0 +1,30 @@
+// Native Navescript I/O Streams
+module std.io.streams;
+
+import std.core;
+
+pub interface Stream {
+    fn read(len: number) -> string;
+    fn write(data: string) -> number;
+    fn close();
+}
+
+pub class FileStream implements Stream {
+    let fd: number;
+
+    pub fn init(path: string, mode: string) {
+        this.fd = ffi::call("nasi.fs.open", [path, mode]);
+    }
+
+    pub fn read(len: number) -> string {
+        return ffi::call("nasi.fs.read", [this.fd, len]);
+    }
+
+    pub fn write(data: string) -> number {
+        return ffi::call("nasi.fs.write", [this.fd, data]);
+    }
+
+    pub fn close() {
+        ffi::call("nasi.fs.close", [this.fd]);
+    }
+}

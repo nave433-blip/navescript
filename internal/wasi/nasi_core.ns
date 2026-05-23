@@ -1,0 +1,32 @@
+// NASI Core Native Syscalls
+// Navescript's equivalent to WASI, representing the true Native ABI.
+module internal.wasi.nasi_core;
+
+import std.core;
+
+pub class NasiSyscalls {
+    
+    // Memory allocation matching our GC
+    pub fn sys_alloc(size: number) -> any {
+        return ffi::call("nasi.sys.alloc", [size]);
+    }
+
+    // Thread management (Goroutine/OS thread equivalent)
+    pub fn sys_spawn(threadFn: fn(), stackSize: number) -> number {
+        return ffi::call("nasi.sys.spawn", [threadFn, stackSize]);
+    }
+
+    pub fn sys_yield() {
+        ffi::call("nasi.sys.yield", []);
+    }
+
+    // High-performance async I/O completion port / epoll interface
+    pub fn sys_io_submit(fd: number, op: number, buffer: any) -> number {
+        return ffi::call("nasi.sys.io_submit", [fd, op, buffer]);
+    }
+
+    // Dynamic Polyglot Runtime Loading
+    pub fn sys_load_engine(engineName: string, dylibPath: string) -> number {
+        return ffi::call("nasi.sys.load_engine", [engineName, dylibPath]);
+    }
+}

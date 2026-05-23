@@ -1,0 +1,54 @@
+// std/cli/codecamp.ns
+// Native Navescript CodeCamp: The Singularity Gateway
+
+module std.cli.codecamp;
+
+import std.core;
+import std.cli;
+
+pub fn show_logo() {
+    let logo = "
+    _   _  ____  _____ ____  ____   ____ ___ ____  __  __ 
+    | \\ | |/ ___|| ____/ ___|| ___| / ___|_ _|  _ \\|  \\/  |
+    |  \\| |\\___ \\|  _| \\___ \\|___ \\| |    | || |_) | |\\/| |
+    | |\\  | ___) | |___ ___) |___) | |___ | ||  __/| |  | |
+    |_| \\_||____/|_____|____/|____/ \\____|___|_|   |_|  |_|
+    
+     CODE CAMP: The Singularity Gateway to Navescript
+    ";
+    core.println(logo);
+    core.println("         --- Author: Evan Shipley ---");
+}
+
+pub fn run_camp() {
+    show_logo();
+    
+    let root = cli.Command.new("codecamp", "NvS CodeCamp Menu", fn(cmd, args) {
+        cmd.showHelp();
+    });
+
+    let learn_basics = cli.Command.new("learn-basics", "Learn: Basics of NvS Syntax", fn(cmd, args) {
+        core.println("\n--- Module 1: Basics ---");
+        core.println("Navescript uses 'fn' for functions and 'let' for variables.");
+        core.println("Example: let x = 10; fn add(a, b) { return a + b; }");
+    });
+
+    let learn_omega = cli.Command.new("learn-omega", "Learn: Omega Protocol (Greek Symbols)", fn(cmd, args) {
+        core.println("\n--- Module 2: Omega Protocol ---");
+        core.println("The Omega Protocol uses Greek symbols for advanced quantum operations.");
+        core.println("Example: Ϙ represents a Quantum State transition.");
+    });
+
+    let debug_cmd = cli.Command.new("debug", "Fix: Debug Your Nave Code", fn(cmd, args) {
+        core.println("Paste your broken NvS code here (type 'EOF' to finish):");
+        // Mock debugger logic
+        core.println("\nAnalyzing code for bugs...");
+        core.println("Found error at line 1: Expected Greek symbol 'Ϙ' for Quantum State.");
+    });
+
+    root.addCommand(learn_basics);
+    root.addCommand(learn_omega);
+    root.addCommand(debug_cmd);
+
+    root.execute(core.get_args());
+}

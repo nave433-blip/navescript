@@ -1,0 +1,37 @@
+// Native Navescript WASI Filesystem
+module std.wasi.fs;
+
+import std.core;
+
+pub enum Rights {
+    FD_READ = 1,
+    FD_WRITE = 2,
+    FD_SYNC = 4,
+    // ...
+}
+
+pub class File {
+    let fd: number;
+
+    pub fn open(path: string, rights: Rights) -> File {
+        let f = new File();
+        f.fd = ffi::call("wasi.fd_open", [path, rights]);
+        return f;
+    }
+
+    pub fn read(len: number) -> string {
+        return ffi::call("wasi.fd_read", [this.fd, len]);
+    }
+
+    pub fn write(data: string) -> number {
+        return ffi::call("wasi.fd_write", [this.fd, data]);
+    }
+
+    pub fn seek(offset: number, whence: number) -> number {
+        return ffi::call("wasi.fd_seek", [this.fd, offset, whence]);
+    }
+
+    pub fn close() {
+        ffi::call("wasi.fd_close", [this.fd]);
+    }
+}

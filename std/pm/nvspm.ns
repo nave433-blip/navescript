@@ -1,0 +1,42 @@
+// Native Navescript Package Manager (NvSPM)
+module std.pm;
+
+import std.core;
+import std.fs;
+import std.json;
+import std.net.http;
+
+pub class Crate {
+    pub let name: string;
+    pub let version: string;
+    pub let dependencies: Map<string, string>;
+}
+
+pub class PackageManager {
+    let registry_url: string = "https://reg.navescript.org";
+    let lib_path: string = "lib/";
+
+    pub fn install(crate_name: string, version: string) {
+        core.println("Installing " + crate_name + "@" + version + "...");
+        let url = this.registry_url + "/crates/" + crate_name + "/" + version + ".tar.gz";
+        let response = http.get(url);
+        
+        if (response.statusCode == 200) {
+            let dest = this.lib_path + crate_name;
+            fs.mkdir(dest);
+            fs.write(dest + "/package.tar.gz", response.body);
+            // Internal call to extract
+            ffi::call("nasi.sys.extract", [dest + "/package.tar.gz", dest]);
+            core.println("Successfully installed " + crate_name);
+        } else {
+            core.println("Failed to install " + crate_name + ": " + response.statusCode);
+        }
+    }
+
+    pub fn build() {
+        let manifest = json.unmarshal(fs.read("navescript.json"));
+        core.println("Building project: " + manifest.name);
+        // Invoke native compiler
+        ffi::call("nasi.compiler.build", ["."]);
+    }
+}

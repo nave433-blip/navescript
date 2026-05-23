@@ -1,0 +1,16 @@
+// Native Navescript Runtime Integration
+module std.runtime;
+
+import std.core;
+
+pub fn gc() {
+    ffi::call("nasi.runtime.gc_collect", []);
+}
+
+pub fn memory_info() -> Map<string, number> {
+    return ffi::call("nasi.runtime.memory_info", []);
+}
+
+pub fn set_finalizer(obj: any, callback: fn(any)) {
+    ffi::call("nasi.runtime.set_finalizer", [obj, callback]);
+}

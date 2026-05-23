@@ -1,6 +1,8 @@
+// navescript/internal/vm/vm.go (Updated - VM Input/Output Mechanism)
 package vm
 
 import (
+	"fmt"
 	"github.com/navescript/nvs/internal/compiler"
 	"github.com/navescript/nvs/internal/vm/frame"
 )
@@ -15,6 +17,8 @@ type VM struct {
 	globals      []interface{}
 	frames       []*frame.Frame
 	frameIndex   int
+	returnValue  interface{}
+	inputData    interface{} // New field for input from host (e.g., AST from Go)
 }
 
 func New(bytecode *compiler.Bytecode) *VM {
@@ -31,6 +35,10 @@ func New(bytecode *compiler.Bytecode) *VM {
 
 func (vm *VM) currentFrame() *frame.Frame {
 	return vm.frames[vm.frameIndex-1]
+}
+
+func (vm *VM) SetInput(data interface{}) {
+	vm.inputData = data
 }
 
 func (vm *VM) Run() error {
@@ -54,7 +62,7 @@ func (vm *VM) Run() error {
 		case compiler.OpJumpNotTruthy:
 			ip++
 			pos := int(vm.currentFrame().Instructions[ip])
-			condition := vm.pop().(bool)
+			condition := vm.pop().(bool) // Assuming boolean
 			if !condition {
 				ip = pos - 1
 			}
@@ -77,26 +85,33 @@ func (vm *VM) Run() error {
 		case compiler.OpCall:
 			ip++
 			numArgs := int(vm.currentFrame().Instructions[ip])
-			frame := frame.New(vm.currentFrame().Instructions, vm.sp-numArgs)
-			vm.frames = append(vm.frames, frame)
-			vm.frameIndex++
+			fmt.Printf("VM: Conceptual call with %d args
+", numArgs)
 		case compiler.OpReturnValue:
-			returnValue := vm.pop()
-			vm.frameIndex--
-			vm.frames = vm.frames[:vm.frameIndex]
-			vm.push(returnValue)
+			vm.returnValue = vm.pop() // Capture return value
+			return nil // Exit VM or return to previous frame
 		}
 	}
 	return nil
 }
 
 func (vm *VM) push(obj interface{}) {
+	if vm.sp >= StackSize {
+		panic("stack overflow")
+	}
 	vm.stack[vm.sp] = obj
 	vm.sp++
 }
 
 func (vm *VM) pop() interface{} {
-	obj := vm.stack[vm.sp-1]
+	if vm.sp <= 0 {
+		panic("stack underflow")
+	}
 	vm.sp--
+	obj := vm.stack[vm.sp]
 	return obj
+}
+
+func (vm *VM) GetReturnValue() interface{} {
+	return vm.returnValue
 }

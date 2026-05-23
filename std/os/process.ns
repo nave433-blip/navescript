@@ -1,0 +1,26 @@
+// Native Navescript Process Management
+module std.os.process;
+
+pub class Process {
+    pub let pid: number;
+    let handle: any;
+
+    pub fn spawn(command: string, args: string[]) -> Process {
+        let p = new Process();
+        p.handle = ffi::call("nasi.process.spawn", [command, args]);
+        p.pid = ffi::call("nasi.process.get_pid", [p.handle]);
+        return p;
+    }
+
+    pub fn wait() -> number {
+        return ffi::call("nasi.process.wait", [this.handle]);
+    }
+
+    pub fn kill(signal: number) {
+        ffi::call("nasi.process.kill", [this.handle, signal]);
+    }
+}
+
+pub fn exit(code: number) {
+    ffi::call("nasi.process.exit", [code]);
+}

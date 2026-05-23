@@ -4136,11 +4136,13 @@ dependencies = [
  "tokio-postgres",
  "tokio-serial",
  "tokio-tungstenite",
+ "toml",
  "tonic",
  "tower-lsp",
  "tracing",
  "tracing-opentelemetry",
  "tracing-subscriber",
+ "walkdir",
  "wasmtime",
  "wasmtime-wasi",
 ]

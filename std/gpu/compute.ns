@@ -1,0 +1,18 @@
+// Native Navescript GPU/Compute Hooks
+module std.gpu.compute;
+
+import std.core;
+
+pub class Kernel {
+    let handle: any;
+
+    pub fn load_spirv(path: string) -> Kernel {
+        let k = new Kernel();
+        k.handle = ffi::call("nasi.gpu.load_kernel", [path]);
+        return k;
+    }
+
+    pub fn dispatch(x: number, y: number, z: number, buffers: any[]) {
+        ffi::call("nasi.gpu.dispatch", [this.handle, x, y, z, buffers]);
+    }
+}

@@ -1,0 +1,36 @@
+// Native Navescript Map Collection
+module std.collections.map;
+
+import std.core;
+
+pub class Map<K, V> {
+    let internal_handle: any;
+    pub let size: number = 0;
+
+    pub fn init() {
+        this.internal_handle = ffi::call("nasi.map.new", []);
+    }
+
+    pub fn set(key: K, value: V) {
+        ffi::call("nasi.map.set", [this.internal_handle, key, value]);
+        this.size = ffi::call("nasi.map.len", [this.internal_handle]);
+    }
+
+    pub fn get(key: K) -> V {
+        return ffi::call("nasi.map.get", [this.internal_handle, key]);
+    }
+
+    pub fn has(key: K) -> bool {
+        return ffi::call("nasi.map.contains", [this.internal_handle, key]);
+    }
+
+    pub fn delete(key: K) -> bool {
+        let res = ffi::call("nasi.map.remove", [this.internal_handle, key]);
+        this.size = ffi::call("nasi.map.len", [this.internal_handle]);
+        return res;
+    }
+
+    pub fn keys() -> K[] {
+        return ffi::call("nasi.map.keys", [this.internal_handle]);
+    }
+}

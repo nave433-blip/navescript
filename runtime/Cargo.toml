@@ -1,0 +1,10 @@
+[package]
+name = "nas-run"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# For memory mapping and executing code (platform-specific, simplified for now)
+memmap2 = "0.9" 
+libc = "0.2" # For OS-specific calls like mmap
+# Potentially dynasmrt or similar for real JIT, but for conceptual demo, manually emit.

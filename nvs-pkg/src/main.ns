@@ -1,0 +1,59 @@
+// navescript/nvs-pkg/src/main.ns (Expanded)
+// Native Navescript package manager
+
+import std.core.io
+import std.fs.fs
+import std.net.http
+import std.json.json
+
+class PackageManager {
+    func run(args) {
+        if (len(args) < 1) {
+            io.println("Usage: nvs-pkg <command>")
+            io.exit(1)
+        }
+        let cmd = args[0]
+        if (cmd == "build") {
+            io.println("Building Navescript package...")
+            this.build_package()
+        } else if (cmd == "fetch") {
+            let pkg_name = args[1]
+            io.println("Fetching package: " + pkg_name)
+            this.fetch_package(pkg_name)
+        } else if (cmd == "publish") {
+            io.println("Publishing Navescript package...")
+            // Logic to package and upload
+        } else {
+            io.println("Unknown nvs-pkg command: " + cmd)
+        }
+    }
+
+    func build_package() {
+        let manifest_content = fs.read_file("pkg.nvs.toml") // Conceptual read
+        io.println("Manifest: " + manifest_content)
+        // Parse manifest (conceptual for now)
+        let manifest = json.parse(manifest_content) // Assuming TOML is parsed into JSON-like struct
+        io.println("Package '" + manifest.package.name + "' version " + manifest.package.version + " building...")
+
+        // Here, we would invoke the native Navescript compiler
+        // for each .ns file in the src/ directory, targeting NAS.
+        io.println("Invoking native Navescript compiler for .ns files...")
+        // For example: compiler.compile_file("src/lib.ns", "nas")
+        io.println("Package build complete.")
+    }
+
+    func fetch_package(pkg_name) {
+        io.println("Attempting to fetch " + pkg_name + " from registry...")
+        let registry_url = "https://reg.navescript.org/v1/packages/" + pkg_name
+        let response = http.get(registry_url) // Use native HTTP
+        io.println("Registry response: " + response)
+        // Logic to parse response, download package files, etc.
+        io.println("Package fetch complete.")
+    }
+}
+
+// Entry point for nvs-pkg
+func main(args) {
+    let pkg_manager = PackageManager.new()
+    pkg_manager.run(args)
+}

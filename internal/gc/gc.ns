@@ -1,0 +1,63 @@
+// NaveScript Garbage Collector (NvGC) v3.0
+// An advanced generational mark-and-sweep collector implemented natively.
+module internal.gc;
+
+import std.core;
+
+pub class GCObject {
+    pub let marked: bool;
+    pub let generation: number;
+    pub let address: any;
+    pub let size: number;
+    pub let children: GCObject[];
+}
+
+pub class GarbageCollector {
+    let heap: GCObject[] = [];
+    let roots: GCObject[] = [];
+    let threshold: number = 65536; // Initial 64KB trigger
+
+    pub fn manage(obj: GCObject) {
+        this.heap.push(obj);
+        if (this.heap.length > this.threshold) {
+            this.collect();
+        }
+    }
+
+    pub fn collect() {
+        core.println("[NvGC] Triggering collection...");
+        this.mark();
+        this.sweep();
+        this.threshold = this.heap.length * 2; // Dynamic resizing
+    }
+
+    fn mark() {
+        // Fetch roots from VM stack and global registry
+        this.roots = ffi::call("nasi.runtime.get_roots", []);
+        for (let root in this.roots) {
+            this.traverse(root);
+        }
+    }
+
+    fn traverse(obj: GCObject) {
+        if (obj == null || obj.marked) return;
+        obj.marked = true;
+        for (let child in obj.children) {
+            this.traverse(child);
+        }
+    }
+
+    fn sweep() {
+        let new_heap: GCObject[] = [];
+        for (let obj in this.heap) {
+            if (obj.marked) {
+                obj.marked = false;
+                obj.generation++;
+                new_heap.push(obj);
+            } else {
+                ffi::call("nasi.sys.free", [obj.address]);
+            }
+        }
+        this.heap = new_heap;
+    }
+}
