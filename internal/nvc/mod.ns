@@ -1,0 +1,52 @@
+// Native Navescript Crate Manager (nvc)
+// Handles dependency resolution, project initialization, and builds.
+module nvc.core;
+
+import std.fs;
+import std.io;
+import std.json;
+import std.net.http;
+import std.os;
+
+pub class Project {
+    let name: string;
+    let version: string;
+    let dependencies: Map<string, string>;
+
+    pub fn load(path: string) -> Project {
+        let content = fs.read_file(path + "/nvc.json");
+        return json.unmarshal(content);
+    }
+
+    pub fn save(path: string) {
+        let content = json.marshal(this);
+        fs.write_file(path + "/nvc.json", content);
+    }
+}
+
+pub fn init(name: string) {
+    let p = new Project();
+    p.name = name;
+    p.version = "0.1.0";
+    p.dependencies = {};
+    p.save(".");
+    fs.mkdir("src");
+    fs.write_file("src/main.ns", "fn main() {\n    println(\"Hello, Navescript!\");\n}\n");
+    println("Initialized Navescript project: " + name);
+}
+
+pub fn install() {
+    let p = Project.load(".");
+    for (let name, version in p.dependencies) {
+        println("Installing " + name + "@" + version + "...");
+        let url = "https://registry.navescript.org/crates/" + name + "/" + version + ".tar.gz";
+        let res = http.get(url);
+        fs.write_file("crates/" + name + ".tar.gz", res.body);
+        // Extraction logic would go here
+    }
+}
+
+pub fn build() {
+    println("Building project...");
+    os.exec("nvs compiler src/main.ns -o bin/app");
+}

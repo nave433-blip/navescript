@@ -1,42 +1,137 @@
-// Native Navescript Package Manager (NvSPM)
-module std.pm;
+// std/pm/nvspm.ns
+// Native Navescript Package Manager (equivalent to Cargo)
+
+module std.pm.nvspm;
 
 import std.core;
-import std.fs;
+import std.cli;
+import std.net.http as net;
 import std.json;
-import std.net.http;
+import std.fs;
 
-pub class Crate {
-    pub let name: string;
-    pub let version: string;
-    pub let dependencies: Map<string, string>;
+let lockfile_entries: Map<string, any> = {};
+
+pub fn init(name: string) {
+    core.println("Initializing Navescript project: " + name);
+    
+    let manifest = {
+        "package": {
+            "name": name,
+            "version": "0.1.0"
+        },
+        "dependencies": {}
+    };
+    
+    fs.write_file("nvs.toml", ffi.call("toml.encode", [manifest]));
+    fs.create_dir("src");
+    fs.write_file("src/main.ns", "// Hello Nave!\nfn main() {\n    core.println(\"Hello, \" + \"" + name + "\");\n}\n");
+    
+    core.println("✅ Project " + name + " created successfully.");
 }
 
-pub class PackageManager {
-    let registry_url: string = "https://reg.navescript.org";
-    let lib_path: string = "lib/";
+pub fn build() {
+    core.println("Building Navescript project...");
+    if (!fs.exists("nvs.toml")) {
+        core.println("❌ Error: nvs.toml not found.");
+        return;
+    }
+    
+    let manifest = ffi.call("toml.decode", [fs.read_file("nvs.toml")]);
+    core.println("Compiling " + manifest.package.name + " v" + manifest.package.version + "...");
+    
+    ffi.call("nvs.compile", ["src/main.ns", "target/output.wasm"]);
+    core.println("✅ Build complete: target/output.wasm");
+}
 
-    pub fn install(crate_name: string, version: string) {
-        core.println("Installing " + crate_name + "@" + version + "...");
-        let url = this.registry_url + "/crates/" + crate_name + "/" + version + ".tar.gz";
-        let response = http.get(url);
+fn fetch_and_extract(pkg_name: string, version: string) -> bool {
+    let url = "https://registry.navescript.org/packages/" + pkg_name + "/" + version + ".tar.gz";
+    core.println("Fetching " + pkg_name + "@" + version + " from " + url + "...");
+    
+    let client = new net.Client();
+    let response = client.get(url);
+    if (response.statusCode == 200) {
+        let pkg_dir = "lib/" + pkg_name;
+        fs.create_dir(pkg_dir);
+        fs.extract_archive(response.body, pkg_dir);
+        return true;
+    }
+    return false;
+}
+
+pub fn resolve_dependencies(pkg_name: string, version: string) {
+    if (lockfile_entries[pkg_name] != null) {
+        return;
+    }
+    
+    core.println("Resolving " + pkg_name + "@" + version + "...");
+    if (fetch_and_extract(pkg_name, version)) {
+        lockfile_entries[pkg_name] = {
+            "version": version,
+            "source": "registry"
+        };
         
-        if (response.statusCode == 200) {
-            let dest = this.lib_path + crate_name;
-            fs.mkdir(dest);
-            fs.write(dest + "/package.tar.gz", response.body);
-            // Internal call to extract
-            ffi::call("nasi.sys.extract", [dest + "/package.tar.gz", dest]);
-            core.println("Successfully installed " + crate_name);
-        } else {
-            core.println("Failed to install " + crate_name + ": " + response.statusCode);
+        let pkg_manifest_path = "lib/" + pkg_name + "/nvs.toml";
+        if (fs.exists(pkg_manifest_path)) {
+            let pkg_manifest = ffi.call("toml.decode", [fs.read_file(pkg_manifest_path)]);
+            if (pkg_manifest.dependencies != null) {
+                for (let dep_name in pkg_manifest.dependencies) {
+                    let dep_version = pkg_manifest.dependencies[dep_name];
+                    resolve_dependencies(dep_name, dep_version);
+                }
+            }
         }
     }
+}
 
-    pub fn build() {
-        let manifest = json.unmarshal(fs.read("navescript.json"));
-        core.println("Building project: " + manifest.name);
-        // Invoke native compiler
-        ffi::call("nasi.compiler.build", ["."]);
+pub fn install(pkg_name: string) {
+    if (!fs.exists("nvs.toml")) {
+        core.println("❌ Error: nvs.toml not found.");
+        return;
     }
+    let manifest = ffi.call("toml.decode", [fs.read_file("nvs.toml")]);
+
+    if (pkg_name == null || pkg_name == "") {
+        core.println("Installing all dependencies...");
+        if (manifest.dependencies != null) {
+            for (let name in manifest.dependencies) {
+                resolve_dependencies(name, manifest.dependencies[name]);
+            }
+        }
+    } else {
+        let version = "1.0.0";
+        resolve_dependencies(pkg_name, version);
+        
+        // Update manifest
+        manifest.dependencies[pkg_name] = version;
+        fs.write_file("nvs.toml", ffi.call("toml.encode", [manifest]));
+    }
+
+    fs.write_file("nvs.lock", json.encode({"packages": lockfile_entries}));
+    core.println("✅ Installation complete.");
+}
+
+pub fn run() {
+    build();
+    core.println("Running...");
+    ffi.call("nvs.execute", ["target/output.wasm"]);
+}
+
+pub fn setup_cli(args: string[]) {
+    let root = cli.Command.new("nvspm", "Navescript Package Manager", fn(cmd, a) {
+        cmd.showHelp();
+    });
+    
+    root.addCommand(cli.Command.new("init", "Initialize a new project", fn(cmd, a) {
+        if (a.length > 0) { init(a[0]); } else { core.println("Usage: nvspm init <name>"); }
+    }));
+    
+    root.addCommand(cli.Command.new("build", "Build the current project", fn(cmd, a) { build(); }));
+    
+    root.addCommand(cli.Command.new("install", "Install a package", fn(cmd, a) {
+        if (a.length > 0) { install(a[0]); } else { install(null); }
+    }));
+
+    root.addCommand(cli.Command.new("run", "Build and run the current project", fn(cmd, a) { run(); }));
+    
+    root.execute(args);
 }

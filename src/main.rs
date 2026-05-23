@@ -61,6 +61,13 @@ enum Commands {
     },
     /// Start interactive REPL
     Repl,
+    /// Launch the NvS CodeCamp
+    Camp,
+    /// Launch the Navescript Package Manager
+    Pm {
+        #[arg(trailing_var_arg = true)]
+        args: Vec<String>,
+    },
     /// Run test suite for the current project
     Test {
         #[arg(long)]
@@ -140,6 +147,14 @@ async fn main() -> Result<()> {
                 }
             }
             Ok(())
+        }
+        Some(Commands::Camp) => {
+            let code = "import std.cli.codecamp; codecamp.run_camp();".to_string();
+            package_manager::run_code(code, "camp.ns", "permissive", 0, 0).await
+        }
+        Some(Commands::Pm { args }) => {
+            let code = format!("import std.pm.nvspm; nvspm.setup_cli({:?});", args);
+            package_manager::run_code(code, "pm.ns", "permissive", 0, 0).await
         }
         Some(Commands::Init { name }) => {
             let project_path = PathBuf::from(name);

@@ -1,0 +1,33 @@
+// navescript/src/compiler/compiler.ns (Native Navescript Compiler - conceptual)
+
+import std.core.io
+import src.compiler.lexer.lexer
+import src.compiler.parser.parser
+import src.compiler.backend.nas_backend
+
+class Compiler {
+    func new() {
+        return Compiler()
+    }
+
+    func compile_file(path) {
+        io.println("Native Compiler: Compiling " + path + "...")
+        // Conceptual steps:
+        // 1. Read file content
+        // 2. Lex
+        // 3. Parse to AST
+        // 4. Compile AST to NAS using nas_backend
+
+        // For now, simulate by calling the nas_backend directly
+        let lex = lexer.Lexer.new("dummy code from " + path)
+        let par = parser.Parser.new(lex)
+        let ast = par.parse_program() // Conceptual AST from file
+
+        let backend = nas_backend.NasBackend.new()
+        // Simulate passing the AST
+        backend.ast_input_program = ast
+        let nas_code = backend.compile_to_nas()
+
+        return nas_code
+    }
+}

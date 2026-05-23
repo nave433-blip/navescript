@@ -1,0 +1,49 @@
+// Native Navescript Language Server (NvS-LSP)
+// Implements the Language Server Protocol for IDE integration.
+module lsp.core;
+
+import std.io;
+import std.json;
+import std.compiler;
+
+pub class LSPServer {
+    pub fn start() {
+        while (true) {
+            let line = io.read_line(); // Expecting Content-Length
+            if (line == null) break;
+            
+            // Basic LSP JSON-RPC framing logic
+            let content = io.read_exact(this.parse_length(line));
+            let request = json.unmarshal(content);
+            this.handle_request(request);
+        }
+    }
+
+    fn handle_request(req: any) {
+        let method = req["method"];
+        if (method == "initialize") {
+            this.respond(req["id"], { "capabilities": { "hoverProvider": true, "definitionProvider": true } });
+        } else if (method == "textDocument/hover") {
+            this.handle_hover(req);
+        }
+    }
+
+    fn handle_hover(req: any) {
+        let path = req["params"]["textDocument"]["uri"];
+        let pos = req["params"]["position"];
+        // Use native compiler to get symbol info
+        let info = compiler.get_symbol_at(path, pos);
+        this.respond(req["id"], { "contents": info.documentation });
+    }
+
+    fn respond(id: any, result: any) {
+        let res = { "jsonrpc": "2.0", "id": id, "result": result };
+        let body = json.marshal(res);
+        print("Content-Length: " + body.length() + "\r\n\r\n" + body);
+    }
+
+    fn parse_length(header: string) -> number {
+        // Parse "Content-Length: 123"
+        return 0; // Simplified
+    }
+}

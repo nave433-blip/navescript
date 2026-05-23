@@ -1,6 +1,4 @@
-// navescript/runtime/src/main.rs
-// The Rust-based host runtime for NAS modules.
-
+// navescript/runtime/src/main.rs (Updated)
 mod jit;
 mod loader;
 mod nasi;
@@ -17,11 +15,11 @@ fn main() {
     }
 
     // 1. Load the .nas module
-    let module = load_nas_module(&args[1]).expect("Failed to load module");
+    let mut module = load_nas_module(&args[1]).expect("Failed to load module");
 
     // 2. Instantiate JIT Engine and compile module
     let mut jit = JitEngine::new();
-    let executable = jit.compile(&module).expect("JIT compilation failed");
+    let mut executable = jit.compile(&mut module).expect("JIT compilation failed");
 
     // 3. Execute
     println!("Executing module...");

@@ -1,4 +1,4 @@
-// navescript/runtime/src/jit.rs (Expanded with LOAD/STORE, Register Mapping, GC Integration)
+// navescript/runtime/src/jit.rs (Expanded with LOAD/STORE/DIV and improved register mapping)
 
 use crate::loader::{Instruction, NasModule};
 use crate::nasi::syscall_handler;
@@ -21,23 +21,20 @@ impl ExecutableModule {
     // Unsafe because it executes raw machine code.
     pub unsafe fn run(&mut self) -> u64 {
         let memory_ptr = self.memory.as_mut_ptr();
-        // Pass a pointer to the allocator too, if needed in NAS code directly (complex)
-        // For simplicity, allocator interaction is only through NASI for now.
-
         let code_fn: extern "C" fn(*mut u8) -> u64 = std::mem::transmute(self.code.as_ptr());
         code_fn(memory_ptr) // Pass memory base pointer to the NAS function
     }
 }
 
-// Map conceptual NAS registers (R0-R15) to x86_64 registers (for simplicity, only a few)
-// This is a highly simplified mapping. A real JIT uses complex register allocation.
+// Map conceptual NAS registers (R0-R3) to x86_64 registers
+// R0 -> RAX, R1 -> RCX, R2 -> RDX, R3 -> RBX (common calling convention order for args)
 fn nas_reg_to_x64(reg_id: u8) -> u8 {
     match reg_id {
-        0 => 0, // R0 -> RAX
-        1 => 3, // R1 -> RBX
-        2 => 1, // R2 -> RCX
-        3 => 2, // R3 -> RDX
-        _ => 0, // Default to RAX for unmapped conceptual registers
+        0 => 0, // RAX
+        1 => 1, // RCX
+        2 => 2, // RDX
+        3 => 3, // RBX
+        _ => 0, // Fallback to RAX
     }
 }
 
@@ -91,38 +88,54 @@ impl JitEngine {
                 Instruction::LI(reg, imm) => {
                     println!("[JIT] Compiling: LI R{}, {}", reg, imm);
                     let x64_reg = nas_reg_to_x64(*reg);
-                    // movabs rAX, imm64
-                    self.emit_bytes(code_ptr, &[0x48, 0xB8 + x64_reg]); // mov RAX, RBX, RCX, RDX, etc.
+                    self.emit_bytes(code_ptr, &[0x48, 0xB8 + x64_reg]); // mov R(x64_reg), imm64
                     self.emit_bytes(code_ptr, &imm.to_le_bytes()); // 8-byte immediate
                 },
                 Instruction::ADD(dest, src1, src2) => {
                     println!("[JIT] Compiling: ADD R{}, R{}, R{}", dest, src1, src2);
-                    // Simplified: Assuming R0=RAX, R1=RBX etc.
-                    // For now, only handles RAX += RBX conceptually. Needs full reg mapping.
-                    self.emit_bytes(code_ptr, &[0x48, 0x01, 0xC3]); // add rbx, rax
+                    // R_dest = R_src1 + R_src2
+                    let x64_dest = nas_reg_to_x64(*dest);
+                    let x64_src1 = nas_reg_to_x64(*src1);
+                    let x64_src2 = nas_reg_to_x64(*src2);
+                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src2 * 8 + x64_src1]); // mov r_dest, r_src1
+                    self.emit_bytes(code_ptr, &[0x48, 0x01, 0xC0 + x64_src1 * 8 + x64_dest]); // add r_dest, r_src2
                 },
                 Instruction::SUB(dest, src1, src2) => {
                     println!("[JIT] Compiling: SUB R{}, R{}, R{}", dest, src1, src2);
-                    self.emit_bytes(code_ptr, &[0x48, 0x29, 0xC3]); // sub rbx, rax
+                    let x64_dest = nas_reg_to_x64(*dest);
+                    let x64_src1 = nas_reg_to_x64(*src1);
+                    let x64_src2 = nas_reg_to_x64(*src2);
+                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src2 * 8 + x64_src1]); // mov r_dest, r_src1
+                    self.emit_bytes(code_ptr, &[0x48, 0x29, 0xC0 + x64_src1 * 8 + x64_dest]); // sub r_dest, r_src2
                 },
                 Instruction::MUL(dest, src1, src2) => {
                     println!("[JIT] Compiling: MUL R{}, R{}, R{}", dest, src1, src2);
-                    self.emit_bytes(code_ptr, &[0x48, 0xF7, 0xEB]); // imul rbx
+                    // IMUL r_dest, r_src1, r_src2 (simplified to 3-operand form if possible)
+                    // Basic: mov rax, src1; imul src2; mov dest, rax
+                    let x64_dest = nas_reg_to_x64(*dest);
+                    let x64_src1 = nas_reg_to_x64(*src1);
+                    let x64_src2 = nas_reg_to_x64(*src2);
+                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src1 * 8]); // mov rax, r_src1
+                    self.emit_bytes(code_ptr, &[0x48, 0xF7, 0xEA + x64_src2]); // imul r_src2 (operates on rax)
+                    self.emit_bytes(code_ptr, &[0x48, 0x89, 0xC8 + x64_dest]); // mov r_dest, rax
                 },
                 Instruction::DIV(dest, src1, src2) => {
                     println!("[JIT] Compiling: DIV R{}, R{}, R{}", dest, src1, src2);
-                    // Need to setup RDX:RAX for division. Very complex for simplified JIT.
-                    self.emit_bytes(code_ptr, &[0x90]); // NOP for now
+                    // mov rax, src1; xor rdx, rdx; div src2; mov dest, rax
+                    let x64_dest = nas_reg_to_x64(*dest);
+                    let x64_src1 = nas_reg_to_x64(*src1);
+                    let x64_src2 = nas_reg_to_x64(*src2);
+                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src1 * 8]); // mov rax, r_src1
+                    self.emit_bytes(code_ptr, &[0x48, 0x31, 0xD2]); // xor rdx, rdx
+                    self.emit_bytes(code_ptr, &[0x48, 0xF7, 0xF8 + x64_src2]); // div r_src2 (operates on rax, rdx)
+                    self.emit_bytes(code_ptr, &[0x48, 0x89, 0xC8 + x64_dest]); // mov r_dest, rax
                 },
                 Instruction::LOAD(reg, addr_str) => {
                     println!("[JIT] Compiling: LOAD R{}, {}", reg, addr_str);
-                    // Expected: "R15 + offset" or just "offset"
-                    // mov rax, [r14 + offset]
                     if let Some(offset_val) = parse_address_offset(addr_str) {
                          let x64_reg = nas_reg_to_x64(*reg);
-                         // mov rAX, [r14 + offset_val]
-                         self.emit_bytes(code_ptr, &[0x4C, 0x8B, 0x86]); // mov r8, [r14 + disp32] (for R8, etc.)
-                         self.emit_bytes(code_ptr, &offset_val.to_le_bytes()); // disp32
+                         self.emit_bytes(code_ptr, &[0x4C, 0x8B, 0x86]); // mov rAX, [r14 + disp32] (for R8, etc.)
+                         self.emit_bytes(code_ptr, &offset_val.to_le_bytes()); // disp32 (4 bytes)
                     } else {
                         eprintln!("[JIT Warning] LOAD: Cannot parse address string: {}", addr_str);
                         self.emit_bytes(code_ptr, &[0x90]); // NOP
@@ -130,12 +143,10 @@ impl JitEngine {
                 },
                 Instruction::STORE(reg, addr_str) => {
                     println!("[JIT] Compiling: STORE R{}, {}", reg, addr_str);
-                    // mov [r14 + offset], rax
                     if let Some(offset_val) = parse_address_offset(addr_str) {
                         let x64_reg = nas_reg_to_x64(*reg);
-                        // mov [r14 + offset_val], rAX
-                        self.emit_bytes(code_ptr, &[0x4C, 0x89, 0x86]); // mov [r14 + disp32], r8
-                        self.emit_bytes(code_ptr, &offset_val.to_le_bytes()); // disp32
+                        self.emit_bytes(code_ptr, &[0x4C, 0x89, 0x86]); // mov [r14 + disp32], rAX
+                        self.emit_bytes(code_ptr, &offset_val.to_le_bytes()); // disp32 (4 bytes)
                     } else {
                         eprintln!("[JIT Warning] STORE: Cannot parse address string: {}", addr_str);
                         self.emit_bytes(code_ptr, &[0x90]); // NOP
@@ -149,8 +160,8 @@ impl JitEngine {
                 },
                 Instruction::JZ(reg, label) => {
                     println!("[JIT] Compiling: JZ R{}, {}", reg, label);
-                    // cmp rax, 0; jz rel32
-                    self.emit_bytes(code_ptr, &[0x48, 0x83, 0xF8, 0x00]); // cmp rax, 0 (simplified R0=RAX)
+                    let x64_reg = nas_reg_to_x64(*reg);
+                    self.emit_bytes(code_ptr, &[0x48, 0x83, 0xF8 + x64_reg, 0x00]); // cmp r_reg, 0
                     self.emit_bytes(code_ptr, &[0x0F, 0x84]); // jz rel32
                     self.patch_list.push((label.clone(), self.current_code_offset, instruction.clone()));
                     self.emit_bytes(code_ptr, &[0x00, 0x00, 0x00, 0x00]);
@@ -167,27 +178,24 @@ impl JitEngine {
                 },
                 Instruction::PUSH(reg) => {
                     println!("[JIT] Compiling: PUSH R{}", reg);
-                    // Example: push rax
-                    self.emit_bytes(code_ptr, &[0x50]); // push rax
+                    let x64_reg = nas_reg_to_x64(*reg);
+                    self.emit_bytes(code_ptr, &[0x50 + x64_reg]); // push r_reg
                 },
                 Instruction::POP(reg) => {
                     println!("[JIT] Compiling: POP R{}", reg);
-                    // Example: pop rax
-                    self.emit_bytes(code_ptr, &[0x58]); // pop rax
+                    let x64_reg = nas_reg_to_x64(*reg);
+                    self.emit_bytes(code_ptr, &[0x58 + x64_reg]); // pop r_reg
                 },
                 Instruction::SYSCALL(id, arg1, arg2, arg3) => {
                     println!("[JIT] Compiling: SYSCALL {}", id);
                     unsafe {
                         let handler_addr = syscall_handler as *const () as u64;
-                        // Set up arguments for syscall_handler:
-                        // RDI: id, RSI: memory_ptr (from R14), RDX: arg1, RCX: arg2, R8: arg3
                         self.emit_bytes(code_ptr, &[0xBF, (*id & 0xFF) as u8, ((*id >> 8) & 0xFF) as u8, ((*id >> 16) & 0xFF) as u8, ((*id >> 24) & 0xFF) as u8]); // mov edi, id
                         self.emit_bytes(code_ptr, &[0x49, 0x89, 0xF6]); // mov rsi, r14 (memory_ptr)
                         self.emit_bytes(code_ptr, &[0xBA, (*arg1 & 0xFF) as u8, ((*arg1 >> 8) & 0xFF) as u8, ((*arg1 >> 16) & 0xFF) as u8, ((*arg1 >> 24) & 0xFF) as u8]); // mov edx, arg1
                         self.emit_bytes(code_ptr, &[0xB9, (*arg2 & 0xFF) as u8, ((*arg2 >> 8) & 0xFF) as u8, ((*arg2 >> 16) & 0xFF) as u8, ((*arg2 >> 24) & 0xFF) as u8]); // mov ecx, arg2
                         self.emit_bytes(code_ptr, &[0x41, 0xB8, (*arg3 & 0xFF) as u8, ((*arg3 >> 8) & 0xFF) as u8, ((*arg3 >> 16) & 0xFF) as u8, ((*arg3 >> 24) & 0xFF) as u8]); // mov r8d, arg3
                         
-                        // Call nasi::syscall_handler
                         self.emit_bytes(code_ptr, &[0x48, 0xB8]); // mov rax, handler_addr
                         self.emit_bytes(code_ptr, &handler_addr.to_le_bytes());
                         self.emit_bytes(code_ptr, &[0xFF, 0xD0]); // call rax
