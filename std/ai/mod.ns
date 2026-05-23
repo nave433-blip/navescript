@@ -1,0 +1,28 @@
+// Native Navescript AI/ML Integration
+module std.ai;
+
+import std.core;
+
+pub class Tensor {
+    let handle: any;
+
+    pub fn init(dims: number[], data: number[]) {
+        this.handle = ffi::call("nasi.ai.tensor_create", [dims, data]);
+    }
+}
+
+pub class Model {
+    let handle: any;
+
+    pub fn load(path: string) -> Model {
+        let m = new Model();
+        m.handle = ffi::call("nasi.ai.model_load", [path]);
+        return m;
+    }
+
+    pub fn predict(input: Tensor) -> Tensor {
+        let res = new Tensor();
+        res.handle = ffi::call("nasi.ai.model_predict", [this.handle, input.handle]);
+        return res;
+    }
+}

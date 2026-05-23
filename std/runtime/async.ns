@@ -1,0 +1,29 @@
+// Native Navescript Asynchronous Primitives
+module std.async;
+
+import std.core;
+
+pub class Future<T> {
+    let resolved: bool = false;
+    let result: T;
+    let waiters: fn(T)[] = [];
+
+    pub fn then(callback: fn(T)) {
+        if (this.resolved) {
+            callback(this.result);
+        } else {
+            this.waiters.push(callback);
+        }
+    }
+
+    pub fn resolve(val: T) {
+        this.result = val;
+        this.resolved = true;
+        for (let waiter in this.waiters) {
+            waiter(val);
+        }
+    }
+}
+
+// Conceptual await primitive implemented natively in compiler/runtime
+// pub fn await<T>(future: Future<T>) -> T { ... }

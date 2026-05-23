@@ -1,0 +1,53 @@
+// Native Navescript UI Framework (NvS-GUI)
+// Provides high-level abstractions for cross-platform window management and widgets.
+module std.ui;
+
+import std.core;
+
+pub class Window {
+    let handle: any;
+    pub let title: string;
+
+    pub fn init(title: string, width: number, height: number) {
+        this.title = title;
+        this.handle = ffi::call("nasi.ui.window_create", [title, width, height]);
+    }
+
+    pub fn show() {
+        ffi::call("nasi.ui.window_show", [this.handle]);
+    }
+
+    pub fn set_content(widget: Widget) {
+        ffi::call("nasi.ui.window_set_content", [this.handle, widget.handle]);
+    }
+}
+
+pub class Widget {
+    pub let handle: any;
+}
+
+pub class Button extends Widget {
+    pub fn init(text: string, on_click: fn()) {
+        this.handle = ffi::call("nasi.ui.button_create", [text, on_click]);
+    }
+}
+
+pub class Label extends Widget {
+    pub fn init(text: string) {
+        this.handle = ffi::call("nasi.ui.label_create", [text]);
+    }
+}
+
+pub class Layout extends Widget {
+    pub fn init(direction: string) {
+        this.handle = ffi::call("nasi.ui.layout_create", [direction]);
+    }
+
+    pub fn add(child: Widget) {
+        ffi::call("nasi.ui.layout_add", [this.handle, child.handle]);
+    }
+}
+
+pub fn run_app(window: Window) {
+    ffi::call("nasi.ui.main_loop", [window.handle]);
+}

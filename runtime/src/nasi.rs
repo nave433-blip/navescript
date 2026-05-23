@@ -1,13 +1,14 @@
-// navescript/runtime/src/nasi.rs (Expanded)
+// navescript/runtime/src/nasi.rs (Expanded with GC Integration)
 
+use crate::gc::SimpleAllocator;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
 
 // The NASI syscall handler.
 // `memory` is the linear memory slice of the NAS module.
-// `gc_allocator` is passed for memory management.
-pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u8]) -> u64 {
+// `allocator` is passed for memory management.
+pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u8], allocator: &mut SimpleAllocator) -> u64 {
     match id {
         // Filesystem
         10 => { // fs_open(path_ptr, path_len, flags) -> handle
@@ -38,9 +39,6 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
                 return 0;
             }
 
-            // SAFETY: We are creating an owned file descriptor from a raw one.
-            // This is inherently unsafe if the fd is invalid or not owned by us.
-            // In a real system, we'd manage a FileHandle table.
             let mut file = unsafe { File::from_raw_fd(fd) };
             let bytes_read = match file.read(&mut memory[buf_ptr..buf_ptr + buf_len]) {
                 Ok(n) => n as u64,
@@ -49,7 +47,6 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
                     0
                 }
             };
-            // SAFETY: Prevent file from being closed on drop if we don't own it.
             std::mem::forget(file);
             bytes_read
         },
@@ -63,7 +60,6 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
                 return 0;
             }
 
-            // Handle stdout/stderr specially
             if fd == 1 || fd == 2 { // stdout or stderr
                 let data = &memory[buf_ptr..buf_ptr + buf_len];
                 let s = String::from_utf8_lossy(data);
@@ -71,7 +67,6 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
                 return buf_len as u64;
             }
 
-            // SAFETY: Similar to fs_read, this is unsafe.
             let mut file = unsafe { File::from_raw_fd(fd) };
             let bytes_written = match file.write(&memory[buf_ptr..buf_ptr + buf_len]) {
                 Ok(n) => n as u64,
@@ -86,8 +81,6 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
         13 => { // fs_close(handle)
             let fd = arg1 as i32;
             println!("[NASI] fs_close called for handle: {}", fd);
-            // SAFETY: We are taking ownership of the fd.
-            // This assumes the NAS module gives up ownership.
             let _file = unsafe { File::from_raw_fd(fd) };
             0
         }
@@ -95,14 +88,16 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
         // Memory
         50 => { // mem_grow(pages) -> previous_pages
             println!("[NASI] mem_grow called with pages: {}", arg1);
-            // TODO: Implement actual memory growth.
+            // TODO: Implement actual memory growth of the MmapMut region.
+            // For now, return 0 (no memory grown)
             0
         },
         51 => { // gc_alloc(size) -> ptr
             println!("[NASI] gc_alloc called with size: {}", arg1);
-            // This needs to be integrated with the GC system.
-            // For now, return a dummy address within the linear memory.
-            1024 // Return a dummy pointer
+            match allocator.alloc(arg1 as usize) {
+                Some(ptr) => ptr,
+                None => !0, // Return -1 (u64 max) on allocation failure
+            }
         }
 
         _ => {
