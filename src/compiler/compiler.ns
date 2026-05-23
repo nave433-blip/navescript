@@ -1,6 +1,7 @@
-// navescript/src/compiler/compiler.ns (Native Navescript Compiler - conceptual)
+// navescript/src/compiler/compiler.ns (Native Navescript Compiler)
 
 import std.core.io
+import std.fs.fs // Need fs module to read source files
 import src.compiler.lexer.lexer
 import src.compiler.parser.parser
 import src.compiler.backend.nas_backend
@@ -12,20 +13,28 @@ class Compiler {
 
     func compile_file(path) {
         io.println("Native Compiler: Compiling " + path + "...")
-        // Conceptual steps:
         // 1. Read file content
+        let source_code = fs.read_file(path) // Use Navescript's native fs module
+
         // 2. Lex
+        let lex = lexer.Lexer.new(source_code)
         // 3. Parse to AST
-        // 4. Compile AST to NAS using nas_backend
-
-        // For now, simulate by calling the nas_backend directly
-        let lex = lexer.Lexer.new("dummy code from " + path)
         let par = parser.Parser.new(lex)
-        let ast = par.parse_program() // Conceptual AST from file
+        let ast = par.parse_program()
+        if (len(par.errors) > 0) {
+            io.println("Native Compiler Errors:")
+            for (let err in par.errors) {
+                io.println("  - " + err)
+            }
+            return nil
+        }
 
+        // 4. Compile AST to NAS using nas_backend
         let backend = nas_backend.NasBackend.new()
-        // Simulate passing the AST
-        backend.ast_input_program = ast
+        // Here, we convert the Navescript AST object into a JSON string to pass it to the backend.
+        // This simulates the Go-side serialization, but within Navescript.
+        let ast_json_string = std.json.json.stringify(ast) 
+        backend.process_input_ast(ast_json_string) // Pass JSON string to backend
         let nas_code = backend.compile_to_nas()
 
         return nas_code

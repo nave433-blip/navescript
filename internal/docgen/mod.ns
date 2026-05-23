@@ -1,0 +1,27 @@
+// Native Navescript Documentation Generator (nvs_doc)
+// Extracts doc comments and generates Markdown/HTML documentation.
+module docgen.core;
+
+import std.fs;
+import std.io;
+import std.compiler;
+
+pub fn generate(src_dir: string, out_dir: string) {
+    let files = fs.list_dir_recursive(src_dir, "*.ns");
+    for (let file in files) {
+        let ast = compiler.parse_file(file);
+        let docs = this.extract_docs(ast);
+        this.write_markdown(file, docs, out_dir);
+    }
+}
+
+fn extract_docs(ast: compiler.AST) -> any[] {
+    // Logic to find classes, functions, and their doc comments
+    return [];
+}
+
+fn write_markdown(file: string, docs: any[], out_dir: string) {
+    let md = "# Documentation for " + file + "\n\n";
+    // Construct MD content
+    fs.write_file(out_dir + "/" + fs.basename(file) + ".md", md);
+}

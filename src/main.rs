@@ -227,9 +227,14 @@ test("example test", () => {
             println!("Not yet implemented");
             Ok(())
         }
-        Some(Commands::Doc { .. }) => {
-            println!("Not yet implemented");
-            Ok(())
+        Some(Commands::Doc { serve: _ }) => {
+            if let Some(file_path) = &cli.file {
+                let code = format!("import std.doc.gen; gen.generate_docs({:?});", file_path.to_str().unwrap());
+                package_manager::run_code(code, "doc_gen.ns", "permissive", 0, 0).await
+            } else {
+                println!("Please provide a file to generate docs for.");
+                Ok(())
+            }
         }
         Some(Commands::Publish { .. }) => {
             println!("Not yet implemented");

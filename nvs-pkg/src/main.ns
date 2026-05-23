@@ -1,12 +1,16 @@
-// navescript/nvs-pkg/src/main.ns (Expanded)
-// Native Navescript package manager
+// navescript/nvs-pkg/src/main.ns (Expanded with build orchestration)
 
 import std.core.io
 import std.fs.fs
 import std.net.http
 import std.json.json
+import src.compiler.compiler // Import the native Navescript compiler
 
 class PackageManager {
+    func new() {
+        return PackageManager()
+    }
+
     func run(args) {
         if (len(args) < 1) {
             io.println("Usage: nvs-pkg <command>")
@@ -29,16 +33,28 @@ class PackageManager {
     }
 
     func build_package() {
-        let manifest_content = fs.read_file("pkg.nvs.toml") // Conceptual read
-        io.println("Manifest: " + manifest_content)
-        // Parse manifest (conceptual for now)
-        let manifest = json.parse(manifest_content) // Assuming TOML is parsed into JSON-like struct
+        // Read native manifest (conceptual read of pkg.nvs.toml)
+        let manifest_content = fs.read_file("pkg.nvs.toml") 
+        // Assuming TOML is parsed into JSON-like struct (could use a native TOML parser later)
+        let manifest = json.parse(manifest_content) 
         io.println("Package '" + manifest.package.name + "' version " + manifest.package.version + " building...")
 
-        // Here, we would invoke the native Navescript compiler
-        // for each .ns file in the src/ directory, targeting NAS.
-        io.println("Invoking native Navescript compiler for .ns files...")
-        // For example: compiler.compile_file("src/lib.ns", "nas")
+        let compiler = compiler.Compiler.new() // Instantiate the native Navescript compiler
+
+        // Discover .ns files in src/ (conceptual for now)
+        let source_files = ["src/lib.ns", "src/main.ns"] // Example source file
+        
+        for (let file in source_files) {
+            io.println("Compiling source file: " + file)
+            let nas_code = compiler.compile_file(file) // Use native compiler
+            if (nas_code != nil) {
+                let output_nas_file = file + ".nas"
+                fs.write_file(output_nas_file, nas_code)
+                io.println("Generated NAS: " + output_nas_file)
+            } else {
+                io.println("Compilation failed for " + file)
+            }
+        }
         io.println("Package build complete.")
     }
 

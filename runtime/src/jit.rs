@@ -18,9 +18,9 @@ pub struct ExecutableModule {
 }
 
 impl ExecutableModule {
-    // Unsafe because it executes raw machine code.
     pub unsafe fn run(&mut self) -> u64 {
         let memory_ptr = self.memory.as_mut_ptr();
+        // The JIT-compiled code expects `memory_ptr` in RDI.
         let code_fn: extern "C" fn(*mut u8) -> u64 = std::mem::transmute(self.code.as_ptr());
         code_fn(memory_ptr) // Pass memory base pointer to the NAS function
     }
@@ -87,54 +87,54 @@ impl JitEngine {
                 },
                 Instruction::LI(reg, imm) => {
                     println!("[JIT] Compiling: LI R{}, {}", reg, imm);
-                    let x64_reg = nas_reg_to_x64(*reg);
-                    self.emit_bytes(code_ptr, &[0x48, 0xB8 + x64_reg]); // mov R(x64_reg), imm64
+                    let x64_reg_code = nas_reg_to_x64(*reg);
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_reg >> 3) & 1) << 3, 0xB8 | (x64_reg & 7)]);
                     self.emit_bytes(code_ptr, &imm.to_le_bytes()); // 8-byte immediate
                 },
                 Instruction::ADD(dest, src1, src2) => {
                     println!("[JIT] Compiling: ADD R{}, R{}, R{}", dest, src1, src2);
-                    // R_dest = R_src1 + R_src2
                     let x64_dest = nas_reg_to_x64(*dest);
                     let x64_src1 = nas_reg_to_x64(*src1);
                     let x64_src2 = nas_reg_to_x64(*src2);
-                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src2 * 8 + x64_src1]); // mov r_dest, r_src1
-                    self.emit_bytes(code_ptr, &[0x48, 0x01, 0xC0 + x64_src1 * 8 + x64_dest]); // add r_dest, r_src2
+                    // mov R_dest, R_src1; add R_dest, R_src2
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_dest >> 3) & 1) << 3, 0x8B | ((x64_src1 >> 3) & 1) << 2, 0xC0 | (x64_src1 & 7) << 3 | (x64_dest & 7)]); // mov r_dest, r_src1
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_dest >> 3) & 1) << 3, 0x01 | ((x64_src2 >> 3) & 1) << 2, 0xC0 | (x64_src2 & 7) << 3 | (x64_dest & 7)]); // add r_dest, r_src2
                 },
                 Instruction::SUB(dest, src1, src2) => {
                     println!("[JIT] Compiling: SUB R{}, R{}, R{}", dest, src1, src2);
                     let x64_dest = nas_reg_to_x64(*dest);
                     let x64_src1 = nas_reg_to_x64(*src1);
                     let x64_src2 = nas_reg_to_x64(*src2);
-                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src2 * 8 + x64_src1]); // mov r_dest, r_src1
-                    self.emit_bytes(code_ptr, &[0x48, 0x29, 0xC0 + x64_src1 * 8 + x64_dest]); // sub r_dest, r_src2
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_dest >> 3) & 1) << 3, 0x8B | ((x64_src1 >> 3) & 1) << 2, 0xC0 | (x64_src1 & 7) << 3 | (x64_dest & 7)]); // mov r_dest, r_src1
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_dest >> 3) & 1) << 3, 0x29 | ((x64_src2 >> 3) & 1) << 2, 0xC0 | (x64_src2 & 7) << 3 | (x64_dest & 7)]); // sub r_dest, r_src2
                 },
                 Instruction::MUL(dest, src1, src2) => {
                     println!("[JIT] Compiling: MUL R{}, R{}, R{}", dest, src1, src2);
-                    // IMUL r_dest, r_src1, r_src2 (simplified to 3-operand form if possible)
-                    // Basic: mov rax, src1; imul src2; mov dest, rax
                     let x64_dest = nas_reg_to_x64(*dest);
                     let x64_src1 = nas_reg_to_x64(*src1);
                     let x64_src2 = nas_reg_to_x64(*src2);
-                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src1 * 8]); // mov rax, r_src1
-                    self.emit_bytes(code_ptr, &[0x48, 0xF7, 0xEA + x64_src2]); // imul r_src2 (operates on rax)
-                    self.emit_bytes(code_ptr, &[0x48, 0x89, 0xC8 + x64_dest]); // mov r_dest, rax
+                    // mov rax, src1; imul src2; mov dest, rax
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_src1 >> 3) & 1) << 3, 0x8B | ((x64_src1 >> 3) & 1) << 2, 0xC0 | (x64_src1 & 7) << 3 | (nas_reg_to_x64(0) & 7)]); // mov rax, r_src1
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_src2 >> 3) & 1) << 3, 0xF7 | ((x64_src2 >> 3) & 1) << 2, 0xEA | (x64_src2 & 7)]); // imul r_src2 (operates on rax)
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_dest >> 3) & 1) << 3, 0x89 | ((nas_reg_to_x64(0) >> 3) & 1) << 2, 0xC0 | (nas_reg_to_x64(0) & 7) << 3 | (x64_dest & 7)]); // mov r_dest, rax
                 },
                 Instruction::DIV(dest, src1, src2) => {
                     println!("[JIT] Compiling: DIV R{}, R{}, R{}", dest, src1, src2);
-                    // mov rax, src1; xor rdx, rdx; div src2; mov dest, rax
                     let x64_dest = nas_reg_to_x64(*dest);
                     let x64_src1 = nas_reg_to_x64(*src1);
                     let x64_src2 = nas_reg_to_x64(*src2);
-                    self.emit_bytes(code_ptr, &[0x48, 0x8B, 0xC8 + x64_src1 * 8]); // mov rax, r_src1
+                    // mov rax, src1; xor rdx, rdx; div src2; mov dest, rax
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_src1 >> 3) & 1) << 3, 0x8B | ((x64_src1 >> 3) & 1) << 2, 0xC0 | (x64_src1 & 7) << 3 | (nas_reg_to_x64(0) & 7)]); // mov rax, r_src1
                     self.emit_bytes(code_ptr, &[0x48, 0x31, 0xD2]); // xor rdx, rdx
-                    self.emit_bytes(code_ptr, &[0x48, 0xF7, 0xF8 + x64_src2]); // div r_src2 (operates on rax, rdx)
-                    self.emit_bytes(code_ptr, &[0x48, 0x89, 0xC8 + x64_dest]); // mov r_dest, rax
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_src2 >> 3) & 1) << 3, 0xF7 | ((x64_src2 >> 3) & 1) << 2, 0xF8 | (x64_src2 & 7)]); // div r_src2 (operates on rax, rdx)
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_dest >> 3) & 1) << 3, 0x89 | ((nas_reg_to_x64(0) >> 3) & 1) << 2, 0xC0 | (nas_reg_to_x64(0) & 7) << 3 | (x64_dest & 7)]); // mov r_dest, rax
                 },
                 Instruction::LOAD(reg, addr_str) => {
                     println!("[JIT] Compiling: LOAD R{}, {}", reg, addr_str);
                     if let Some(offset_val) = parse_address_offset(addr_str) {
                          let x64_reg = nas_reg_to_x64(*reg);
-                         self.emit_bytes(code_ptr, &[0x4C, 0x8B, 0x86]); // mov rAX, [r14 + disp32] (for R8, etc.)
+                         // mov R_reg, [R14 + offset_val] (R14 holds memory_ptr)
+                         self.emit_bytes(code_ptr, &[0x4C | ((x64_reg >> 3) & 1) << 3, 0x8B | ((nas_reg_to_x64(14) >> 3) & 1) << 2, 0x86 | (x64_reg & 7) << 3 | (nas_reg_to_x64(14) & 7)]);
                          self.emit_bytes(code_ptr, &offset_val.to_le_bytes()); // disp32 (4 bytes)
                     } else {
                         eprintln!("[JIT Warning] LOAD: Cannot parse address string: {}", addr_str);
@@ -145,7 +145,8 @@ impl JitEngine {
                     println!("[JIT] Compiling: STORE R{}, {}", reg, addr_str);
                     if let Some(offset_val) = parse_address_offset(addr_str) {
                         let x64_reg = nas_reg_to_x64(*reg);
-                        self.emit_bytes(code_ptr, &[0x4C, 0x89, 0x86]); // mov [r14 + disp32], rAX
+                        // mov [R14 + offset_val], R_reg
+                        self.emit_bytes(code_ptr, &[0x4C | ((x64_reg >> 3) & 1) << 3, 0x89 | ((nas_reg_to_x64(14) >> 3) & 1) << 2, 0x86 | (x64_reg & 7) << 3 | (nas_reg_to_x64(14) & 7)]);
                         self.emit_bytes(code_ptr, &offset_val.to_le_bytes()); // disp32 (4 bytes)
                     } else {
                         eprintln!("[JIT Warning] STORE: Cannot parse address string: {}", addr_str);
@@ -161,7 +162,7 @@ impl JitEngine {
                 Instruction::JZ(reg, label) => {
                     println!("[JIT] Compiling: JZ R{}, {}", reg, label);
                     let x64_reg = nas_reg_to_x64(*reg);
-                    self.emit_bytes(code_ptr, &[0x48, 0x83, 0xF8 + x64_reg, 0x00]); // cmp r_reg, 0
+                    self.emit_bytes(code_ptr, &[0x48 | ((x64_reg >> 3) & 1) << 3, 0x83, 0xF8 | (x64_reg & 7), 0x00]); // cmp r_reg, 0
                     self.emit_bytes(code_ptr, &[0x0F, 0x84]); // jz rel32
                     self.patch_list.push((label.clone(), self.current_code_offset, instruction.clone()));
                     self.emit_bytes(code_ptr, &[0x00, 0x00, 0x00, 0x00]);
@@ -179,12 +180,12 @@ impl JitEngine {
                 Instruction::PUSH(reg) => {
                     println!("[JIT] Compiling: PUSH R{}", reg);
                     let x64_reg = nas_reg_to_x64(*reg);
-                    self.emit_bytes(code_ptr, &[0x50 + x64_reg]); // push r_reg
+                    self.emit_bytes(code_ptr, &[0x50 | (x64_reg & 7)]); // push r_reg
                 },
                 Instruction::POP(reg) => {
                     println!("[JIT] Compiling: POP R{}", reg);
                     let x64_reg = nas_reg_to_x64(*reg);
-                    self.emit_bytes(code_ptr, &[0x58 + x64_reg]); // pop r_reg
+                    self.emit_bytes(code_ptr, &[0x58 | (x64_reg & 7)]); // pop r_reg
                 },
                 Instruction::SYSCALL(id, arg1, arg2, arg3) => {
                     println!("[JIT] Compiling: SYSCALL {}", id);

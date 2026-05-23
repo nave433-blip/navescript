@@ -1,0 +1,45 @@
+// Native Navescript Web Framework (nvs_axum)
+// A high-performance, ergonomic web framework with native routing.
+module std.net.http.web;
+
+import std.core;
+import std.net.http;
+import std.json;
+
+pub class Router {
+    let routes: Map<string, fn(Request) -> Response> = {};
+
+    pub fn get(path: string, handler: fn(Request) -> Response) {
+        this.routes["GET:" + path] = handler;
+    }
+
+    pub fn post(path: string, handler: fn(Request) -> Response) {
+        this.routes["POST:" + path] = handler;
+    }
+
+    pub fn dispatch(req: Request) -> Response {
+        let key = req.method + ":" + req.path;
+        if (this.routes.has(key)) {
+            return this.routes[key](req);
+        }
+        return Response.status(404).body("Not Found");
+    }
+}
+
+pub class App {
+    let router: Router;
+
+    pub fn init(router: Router) -> App {
+        let a = new App();
+        a.router = router;
+        return a;
+    }
+
+    pub fn listen(port: number) {
+        let server = http.Server.bind(port);
+        println("NvS Web Server running on port " + port);
+        server.handle((req) => {
+            return this.router.dispatch(req);
+        });
+    }
+}

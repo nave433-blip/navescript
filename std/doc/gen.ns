@@ -1,0 +1,68 @@
+// std/doc/gen.ns
+// Native Navescript Documentation Generator
+
+module std.doc.gen;
+
+import std.core;
+import std.fs;
+import std.json;
+
+pub fn generate_docs(path: string) {
+    core.println("Generating documentation for: " + path);
+    
+    if (!fs.exists(path)) {
+        core.println("❌ Error: Path not found: " + path);
+        return;
+    }
+
+    let source = fs.read_file(path);
+    let lines = source.split("\n");
+    
+    let docs = [];
+    let current_doc = "";
+
+    for (let line in lines) {
+        let trimmed = line.trim();
+        
+        if (trimmed.starts_with("///")) {
+            current_doc += trimmed.slice(3).trim() + "\n";
+        } else if (trimmed.starts_with("pub fn") || trimmed.starts_with("pub class")) {
+            let name = parse_name(trimmed);
+            docs.push({
+                "name": name,
+                "type": trimmed.contains("fn") ? "function" : "class",
+                "description": current_doc.trim(),
+                "signature": trimmed.replace("{", "").trim()
+            });
+            current_doc = "";
+        } else {
+            current_doc = "";
+        }
+    }
+
+    render_docs(docs);
+}
+
+fn parse_name(line: string) -> string {
+    let parts = line.split(" ");
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i] == "fn" || parts[i] == "class") {
+            let next = parts[i+1];
+            return next.split("(")[0];
+        }
+    }
+    return "unnamed";
+}
+
+fn render_docs(docs: any[]) {
+    core.println("\n# Documentation Output\n");
+    for (let item in docs) {
+        core.println("## " + item.name + " (" + item.type + ")");
+        core.println("**Signature:** `" + item.signature + "`");
+        if (item.description != "") {
+            core.println("\n" + item.description);
+        }
+        core.println("\n---");
+    }
+    core.println("\n✅ Documentation generated successfully.");
+}

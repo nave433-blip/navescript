@@ -6,6 +6,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
 use std::sync::Mutex;
+use memmap2::MmapMut; // For conceptual mem_grow
 
 // Global map to manage file descriptors that NAS modules 'own'.
 // This prevents double-closing or invalid FDs if not carefully managed.
@@ -23,7 +24,8 @@ fn init_file_handles() {
 // The NASI syscall handler.
 // `memory` is the linear memory slice of the NAS module.
 // `allocator` is passed for memory management.
-pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u8], allocator: &mut SimpleAllocator) -> u64 {
+// `mem_mmap` is the actual MmapMut for the module's memory, for mem_grow.
+pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u8], allocator: &mut SimpleAllocator, mem_mmap: &mut MmapMut) -> u64 {
     // Ensure file handles are initialized for this thread/process
     init_file_handles();
     let mut handles_guard = unsafe { FILE_HANDLES.as_ref().unwrap().lock().unwrap() };
@@ -143,6 +145,31 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
                 Some(ptr) => ptr,
                 None => !0, // Return -1 (u64 max) on allocation failure
             }
+        }
+
+        // Networking
+        100 => { // net_socket_open(family, type) -> handle
+            println!("[NASI] net_socket_open called. Family: {}, Type: {}", arg1, arg2);
+            !0 // Dummy error
+        },
+        101 => { // net_socket_connect(handle, addr_ptr, addr_len) -> err
+            println!("[NASI] net_socket_connect called. Handle: {}, Addr_ptr: {}, Len: {}", arg1, arg2, arg3);
+            !0 // Dummy error
+        },
+        102 => { // net_socket_write(handle, data_ptr, data_len) -> bytes_written
+            println!("[NASI] net_socket_write called. Handle: {}, Data_ptr: {}, Len: {}", arg1, arg2, arg3);
+            0 // Dummy
+        },
+
+        // Foreign Function Interface (FFI)
+        200 => { // ffi_load(lib_path_ptr, lib_path_len) -> lib_handle
+            let lib_path = get_str_from_mem(memory, arg1, arg2 as usize);
+            println!("[NASI] ffi_load called for library: {}", lib_path);
+            !0 // Dummy error
+        },
+        201 => { // ffi_call(lib_handle, func_name_ptr, func_name_len, args_ptr, args_len) -> result
+            println!("[NASI] ffi_call called. Handle: {}, Func_ptr: {}, Args_ptr: {}", arg1, arg2, arg3);
+            0 // Dummy
         }
 
         _ => {

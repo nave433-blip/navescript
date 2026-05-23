@@ -1,0 +1,18 @@
+// Navescript Web Example: REST API
+module examples.web;
+
+import std.net.http.web;
+import std.json;
+
+fn hello_handler(req: Request) -> Response {
+    return Response.ok().json({ "message": "Hello from sovereign Navescript!" });
+}
+
+fn main() {
+    let router = new Router();
+    router.get("/", hello_handler);
+    router.get("/status", (req) => Response.ok().body("OK"));
+
+    let app = App.init(router);
+    app.listen(8080);
+}
