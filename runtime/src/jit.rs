@@ -15,14 +15,16 @@ pub struct ExecutableModule {
     code: MmapMut,   // Executable memory region
     memory: MmapMut, // Linear memory for the NAS module
     allocator: SimpleAllocator, // Allocator tied to this module's memory
+    mem_mmap: MmapMut, // Actual MmapMut for memory growth
 }
 
 impl ExecutableModule {
     pub unsafe fn run(&mut self) -> u64 {
         let memory_ptr = self.memory.as_mut_ptr();
         // The JIT-compiled code expects `memory_ptr` in RDI.
-        let code_fn: extern "C" fn(*mut u8) -> u64 = std::mem::transmute(self.code.as_ptr());
-        code_fn(memory_ptr) // Pass memory base pointer to the NAS function
+        // It also expects a pointer to the allocator and mem_mmap for NASI calls.
+        let code_fn: extern "C" fn(*mut u8, *mut SimpleAllocator, *mut MmapMut) -> u64 = std::mem::transmute(self.code.as_ptr());
+        code_fn(memory_ptr, &mut self.allocator, &mut self.mem_mmap) // Pass memory base pointer, allocator, mem_mmap to the NAS function
     }
 }
 
@@ -37,6 +39,19 @@ fn nas_reg_to_x64(reg_id: u8) -> u8 {
         _ => 0, // Fallback to RAX
     }
 }
+
+// Helper to parse address strings like "R15 + 8" to an offset.
+fn parse_address_offset(addr_str: &str) -> Option<u32> {
+    let parts: Vec<&str> = addr_str.splitn(3, ' ').collect();
+    if parts.len() == 3 && parts[0] == "R15" && parts[1] == "+" {
+        parts[2].parse::<u32>().ok()
+    } else if parts.len() == 1 {
+        parts[0].parse::<u32>().ok() // Direct offset
+    } else {
+        None
+    }
+}
+
 
 // The JIT compilation engine.
 pub struct JitEngine {
@@ -75,8 +90,12 @@ impl JitEngine {
         unsafe {
             // Function prologue: push rbp, mov rbp, rsp
             self.emit_bytes(code_ptr, &[0x55, 0x48, 0x89, 0xE5]);
-            // Save RDI (arg1, which is memory_ptr) to a callee-saved register (R14)
-            self.emit_bytes(code_ptr, &[0x49, 0x89, 0xF6]); // mov r14, rdi (memory_ptr base)
+            // Save RDI (arg1, memory_ptr) to R14
+            self.emit_bytes(code_ptr, &[0x49, 0x89, 0xF6]); // mov r14, rdi
+            // Save RSI (arg2, allocator_ptr) to R13
+            self.emit_bytes(code_ptr, &[0x49, 0x89, 0xEE]); // mov r13, rsi
+            // Save RDX (arg3, mem_mmap_ptr) to R12
+            self.emit_bytes(code_ptr, &[0x49, 0x89, 0xD4]); // mov r12, rdx
         }
 
         for instruction in &module.instructions {
@@ -197,6 +216,10 @@ impl JitEngine {
                         self.emit_bytes(code_ptr, &[0xB9, (*arg2 & 0xFF) as u8, ((*arg2 >> 8) & 0xFF) as u8, ((*arg2 >> 16) & 0xFF) as u8, ((*arg2 >> 24) & 0xFF) as u8]); // mov ecx, arg2
                         self.emit_bytes(code_ptr, &[0x41, 0xB8, (*arg3 & 0xFF) as u8, ((*arg3 >> 8) & 0xFF) as u8, ((*arg3 >> 16) & 0xFF) as u8, ((*arg3 >> 24) & 0xFF) as u8]); // mov r8d, arg3
                         
+                        // Pass allocator and mem_mmap pointers to syscall_handler
+                        self.emit_bytes(code_ptr, &[0x49, 0x89, 0xCD]); // mov r9, r13 (allocator_ptr)
+                        self.emit_bytes(code_ptr, &[0x49, 0x89, 0xC4]); // mov r10, r12 (mem_mmap_ptr)
+
                         self.emit_bytes(code_ptr, &[0x48, 0xB8]); // mov rax, handler_addr
                         self.emit_bytes(code_ptr, &handler_addr.to_le_bytes());
                         self.emit_bytes(code_ptr, &[0xFF, 0xD0]); // call rax
@@ -232,7 +255,7 @@ impl JitEngine {
         // Make the memory executable
         let mut code = code_mmap.make_exec().map_err(|e| e.to_string())?;
 
-        Ok(ExecutableModule { code, memory: linear_memory, allocator })
+        Ok(ExecutableModule { code, memory: linear_memory, allocator, mem_mmap: code_mmap }) // Return the mem_mmap as well
     }
 }
 

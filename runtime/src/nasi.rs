@@ -1,15 +1,14 @@
-// navescript/runtime/src/nasi.rs (Expanded with File Handle Management)
+// navescript/runtime/src/nasi.rs (Expanded with File Handle Management and mem_mmap for mem_grow)
 
 use crate::gc::SimpleAllocator;
+use memmap2::MmapMut; // Import for mem_mmap
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{self, Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
 use std::sync::Mutex;
-use memmap2::MmapMut; // For conceptual mem_grow
 
 // Global map to manage file descriptors that NAS modules 'own'.
-// This prevents double-closing or invalid FDs if not carefully managed.
 static mut FILE_HANDLES: Option<Mutex<HashMap<u64, OwnedFd>>> = None;
 static mut NEXT_HANDLE_ID: u64 = 1;
 
@@ -26,7 +25,6 @@ fn init_file_handles() {
 // `allocator` is passed for memory management.
 // `mem_mmap` is the actual MmapMut for the module's memory, for mem_grow.
 pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u8], allocator: &mut SimpleAllocator, mem_mmap: &mut MmapMut) -> u64 {
-    // Ensure file handles are initialized for this thread/process
     init_file_handles();
     let mut handles_guard = unsafe { FILE_HANDLES.as_ref().unwrap().lock().unwrap() };
 
@@ -137,7 +135,7 @@ pub fn syscall_handler(id: u32, arg1: u64, arg2: u64, arg3: u64, memory: &mut [u
             // This would involve remapping the MmapMut region.
             // For now, return 0 (no memory grown) and log.
             eprintln!("[NASI Warning] mem_grow not fully implemented.");
-            0
+            0 // Indicate no actual growth yet
         },
         51 => { // gc_alloc(size) -> ptr
             println!("[NASI] gc_alloc called with size: {}", arg1);

@@ -1,4 +1,4 @@
-// pub mod hardware;
+pub mod hardware;
 pub mod network;
 pub mod media;
 pub mod ml;

@@ -1,4 +1,4 @@
-// navescript/cmd/nvs/main.go (Updated - Self-Hosting Bridge Refined)
+// navescript/cmd/nvs/main.go (Refined Self-Hosting Bridge)
 package main
 
 import (

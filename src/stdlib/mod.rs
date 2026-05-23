@@ -8,6 +8,8 @@ pub mod intl;
 pub mod timer;
 pub mod error;
 pub mod bootstrap;
+pub mod hw;
+pub mod db;
 
 pub fn register(rt: &mut crate::runtime::NaveRuntime) {
     console::register(rt);
@@ -19,4 +21,6 @@ pub fn register(rt: &mut crate::runtime::NaveRuntime) {
     intl::register(rt);
     timer::register(rt);
     error::register(rt);
+    hw::HardwareHost::register(rt);
+    db::DatabaseHost::register(rt);
 }

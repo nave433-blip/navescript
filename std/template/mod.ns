@@ -1,0 +1,28 @@
+// Native Navescript Template Engine (NvS-Liquid)
+// A high-performance, logic-aware string interpolation and templating engine.
+module std.template;
+
+import std.core;
+import std.re;
+
+pub class Template {
+    let source: string;
+
+    pub fn init(source: string) {
+        this.source = source;
+    }
+
+    pub fn render(context: Map<string, any>) -> string {
+        let result = this.source;
+        for (let key, val in context) {
+            let placeholder = "{{" + key + "}}";
+            result = result.replace(placeholder, val.to_string());
+        }
+        // Logic for control structures (if/for) would go here
+        return result;
+    }
+
+    pub fn from_file(path: string) -> Template {
+        return new Template(fs.read_file(path));
+    }
+}

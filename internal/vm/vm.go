@@ -1,4 +1,4 @@
-// navescript/internal/vm/vm.go (Updated - Input Access)
+// navescript/internal/vm/vm.go (Refined for Input Access)
 package vm
 
 import (
@@ -18,7 +18,7 @@ type VM struct {
 	frames       []*frame.Frame
 	frameIndex   int
 	returnValue  interface{}
-	inputData    interface{} // New field for input from host (e.g., AST from Go)
+	inputData    interface{} // Field for input from host (e.g., AST from Go)
 }
 
 func New(bytecode *compiler.Bytecode) *VM {
@@ -37,6 +37,7 @@ func (vm *VM) currentFrame() *frame.Frame {
 	return vm.frames[vm.frameIndex-1]
 }
 
+// SetInput allows the host to provide data to the Navescript VM.
 func (vm *VM) SetInput(data interface{}) {
 	vm.inputData = data
 }

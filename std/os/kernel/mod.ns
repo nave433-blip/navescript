@@ -1,0 +1,43 @@
+// Native Navescript Kernel and Hardware Interface
+// Provides low-level access to kernel objects and raw hardware.
+module std.os.kernel;
+
+import std.core;
+
+pub class KernelObject {
+    let handle: any;
+    pub let type: string;
+
+    pub fn wait(timeout_ms: number) -> bool {
+        return ffi::call("nasi.os.kernel_wait", [this.handle, timeout_ms]);
+    }
+}
+
+pub class SharedMemory extends KernelObject {
+    pub fn init(size: number) {
+        this.type = "shm";
+        this.handle = ffi::call("nasi.os.shm_create", [size]);
+    }
+
+    pub fn map() -> bytes {
+        return ffi::call("nasi.os.shm_map", [this.handle]);
+    }
+}
+
+module std.hw;
+
+pub class CPU {
+    pub fn get_topology() -> any {
+        return ffi::call("nasi.hw.cpu_topology", []);
+    }
+
+    pub fn set_affinity(cpus: number[]) {
+        ffi::call("nasi.hw.cpu_set_affinity", [cpus]);
+    }
+}
+
+pub class PCI {
+    pub fn list_devices() -> any[] {
+        return ffi::call("nasi.hw.pci_list", []);
+    }
+}

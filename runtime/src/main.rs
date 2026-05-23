@@ -5,8 +5,9 @@ mod nasi;
 mod gc;
 
 use loader::load_nas_module;
-use jit::{JitEngine, LINEAR_MEMORY_SIZE};
+use jit::JitEngine;
 use crate::gc::SimpleAllocator;
+use memmap2::MmapMut; 
 use std::ptr;
 
 fn main() {
@@ -23,12 +24,9 @@ fn main() {
     let mut jit = JitEngine::new();
     let mut executable = jit.compile(&mut module).expect("JIT compilation failed");
 
-    // 3. Prepare allocators and memory for NASI calls
-    // Note: executable.allocator is already initialized during compile,
-    // and passed to NASI calls from the JIT-compiled code.
-
-    // 4. Execute
+    // 3. Execute
     println!("Executing module...");
+    // The executable.run() method now passes memory_ptr, allocator, and mem_mmap
     let result = unsafe {
         executable.run()
     };

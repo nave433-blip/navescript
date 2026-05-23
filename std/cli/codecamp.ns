@@ -39,6 +39,15 @@ pub fn run_camp() {
         core.println("Example: Ϙ represents a Quantum State transition.");
     });
 
+    let learn_hw = cli.Command.new("learn-hw", "Learn: Native Hardware Hooks", fn(cmd, args) {
+        core.println("\n--- Module 3: Hardware Orchestration ---");
+        core.println("Navescript v3.0 supports direct hardware access (Serial, USB, I2C, SPI).");
+        core.println("Example (Serial):");
+        core.println("  let port = ffi.call(\"hw_serial_open\", [\"/dev/ttyUSB0\", 115200]);");
+        core.println("  let data = ffi.call(\"hw_serial_read\", [port, 10]);");
+        core.println("  core.println(\"Received: \" + data.to_string());");
+    });
+
     let debug_cmd = cli.Command.new("debug", "Fix: Debug Your Nave Code", fn(cmd, args) {
         core.println("Paste your broken NvS code here (type 'EOF' to finish):");
         // Mock debugger logic

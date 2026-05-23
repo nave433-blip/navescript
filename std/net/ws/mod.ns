@@ -1,0 +1,33 @@
+// Native Navescript WebSocket Support
+module std.net.ws;
+
+import std.core;
+import std.net.http;
+
+pub class WebSocket {
+    let handle: any;
+
+    pub fn connect(url: string) -> WebSocket {
+        let ws = new WebSocket();
+        ws.handle = ffi::call("nasi.net.ws_connect", [url]);
+        return ws;
+    }
+
+    pub fn send(data: string) {
+        ffi::call("nasi.net.ws_send", [this.handle, data]);
+    }
+
+    pub fn on_message(callback: fn(string)) {
+        ffi::call("nasi.net.ws_on_message", [this.handle, callback]);
+    }
+
+    pub fn close() {
+        ffi::call("nasi.net.ws_close", [this.handle]);
+    }
+}
+
+pub class WebSocketServer {
+    pub fn listen(port: number, on_conn: fn(WebSocket)) {
+        ffi::call("nasi.net.ws_server_listen", [port, on_conn]);
+    }
+}
