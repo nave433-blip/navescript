@@ -1,0 +1,25 @@
+// Native Navescript Debugging Primitives
+module std.debug;
+
+import std.core;
+
+pub class Breakpoint {
+    let file: string;
+    let line: number;
+    let active: bool = true;
+
+    pub fn init(file: string, line: number) {
+        this.file = file;
+        this.line = line;
+    }
+}
+
+pub fn breakpoint() {
+    // Native hook to trigger debugger interrupt
+    ffi::call("nasi.debug.breakpoint", []);
+}
+
+pub fn dump_state() {
+    let state = ffi::call("nasi.debug.get_vm_state", []);
+    println("VM State Dump: " + state);
+}

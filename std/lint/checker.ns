@@ -1,0 +1,72 @@
+// std/lint/checker.ns
+// Native Navescript Linter
+
+module std.lint.checker;
+
+import std.core;
+import std.fs;
+
+pub fn lint(path: string) {
+    core.println("Linting: " + path);
+    
+    if (!fs.exists(path)) {
+        core.println("❌ Error: Path not found: " + path);
+        return;
+    }
+
+    let source = fs.read_file(path);
+    let lines = source.split("\n");
+    let errors = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        let line_num = i + 1;
+
+        // Check class naming (PascalCase)
+        if (line.starts_with("pub class") || line.starts_with("class")) {
+            let name = parse_name(line, "class");
+            if (!is_pascal_case(name)) {
+                core.println("Line " + line_num + ": Class '" + name + "' should be PascalCase.");
+                errors++;
+            }
+        }
+
+        // Check function naming (camelCase)
+        if (line.starts_with("pub fn") || line.starts_with("fn")) {
+            let name = parse_name(line, "fn");
+            if (name != "main" && !is_camel_case(name)) {
+                core.println("Line " + line_num + ": Function '" + name + "' should be camelCase.");
+                errors++;
+            }
+        }
+    }
+
+    if (errors == 0) {
+        core.println("✅ No linting issues found.");
+    } else {
+        core.println("\n❌ Found " + errors + " linting issues.");
+    }
+}
+
+fn parse_name(line: string, keyword: string) -> string {
+    let parts = line.split(" ");
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i] == keyword) {
+            let next = parts[i+1];
+            return next.split("(")[0].split("{")[0].trim();
+        }
+    }
+    return "";
+}
+
+fn is_pascal_case(s: string) -> bool {
+    if (s.length == 0) return true;
+    let first = s.slice(0, 1);
+    return first == first.to_upper() && !s.contains("_");
+}
+
+fn is_camel_case(s: string) -> bool {
+    if (s.length == 0) return true;
+    let first = s.slice(0, 1);
+    return first == first.to_lower() && !s.contains("_");
+}

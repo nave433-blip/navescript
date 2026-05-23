@@ -1,0 +1,33 @@
+// Native Navescript Debugger (nvs_dbg)
+// Provides interactive debugging for NAS programs.
+module debugger.core;
+
+import std.io;
+import std.debug;
+import std.os;
+
+pub class Debugger {
+    let process_handle: any;
+
+    pub fn attach(pid: number) {
+        this.process_handle = ffi::call("nasi.debug.attach", [pid]);
+        this.repl();
+    }
+
+    fn repl() {
+        while (true) {
+            print("(nvs-dbg) ");
+            let cmd = io.read_line();
+            if (cmd == "step") {
+                ffi::call("nasi.debug.step", [this.process_handle]);
+            } else if (cmd == "continue") {
+                ffi::call("nasi.debug.continue", [this.process_handle]);
+            } else if (cmd == "vars") {
+                let vars = ffi::call("nasi.debug.get_vars", [this.process_handle]);
+                println(vars);
+            } else if (cmd == "exit") {
+                break;
+            }
+        }
+    }
+}

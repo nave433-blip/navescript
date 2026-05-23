@@ -29,9 +29,9 @@ fn main() {
     for (path, content) in &scripts {
         writeln!(
             f,
-            "        (\"{}\", r##\"{}\"##),",
-            path.replace('\\', "/"), // ensure forward slashes for path
-            content
+            "        (\"{}\", r####\"{}\"####),",
+            path.replace('\\', "/"), 
+            content.replace('\\', "\\\\")
         ).unwrap();
     }
     writeln!(f, "    ]").unwrap();

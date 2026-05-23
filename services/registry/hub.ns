@@ -1,0 +1,54 @@
+// Navescript Sovereign Hub (nvs_hub)
+// The backend server for the Navescript Package Registry.
+module registry.hub;
+
+import std.net.http.web;
+import std.db;
+import std.fs;
+import std.json;
+
+class RegistryServer {
+    let db: Database;
+
+    pub fn init() {
+        this.db = Database.open("data/registry.db");
+    }
+
+    pub fn start() {
+        let router = new Router();
+        
+        // Search crates
+        router.get("/api/v1/crates", (req) => {
+            let query = req.params["q"];
+            let results = this.db.query("crates", { "name": { "$like": query } });
+            return Response.ok().json(results);
+        });
+
+        // Publish crate
+        router.post("/api/v1/crates/new", (req) => {
+            let data = json.unmarshal(req.body);
+            this.db.put("crates", data["name"], data);
+            return Response.ok().json({ "status": "published" });
+        });
+
+        // Download crate
+        router.get("/api/v1/crates/:name/:version/download", (req) => {
+            let name = req.params["name"];
+            let version = req.params["version"];
+            let path = "storage/" + name + "-" + version + ".tar.gz";
+            if (fs.exists(path)) {
+                return Response.ok().file(path);
+            }
+            return Response.status(404).body("Crate not found");
+        });
+
+        let app = App.init(router);
+        app.listen(9000);
+    }
+}
+
+fn main() {
+    let server = new RegistryServer();
+    server.init();
+    server.start();
+}
