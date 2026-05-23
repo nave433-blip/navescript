@@ -1,0 +1,25 @@
+// Comprehensive Test for Navescript Core
+module tests.core;
+
+import std.test;
+import std.math;
+import std.json;
+
+fn test_math() {
+    test.assert_eq(math.add(1, 1), 2, "1 + 1 should be 2");
+    test.assert_eq(math.sqrt(16), 4, "sqrt(16) should be 4");
+}
+
+fn test_json() {
+    let data = { "name": "NvS", "version": 3 };
+    let encoded = json.marshal(data);
+    let decoded = json.unmarshal(encoded);
+    test.assert_eq(decoded["name"], "NvS", "JSON name should match");
+}
+
+fn main() {
+    let runner = new test.TestRunner();
+    runner.register(test_math);
+    runner.register(test_json);
+    runner.run_all();
+}

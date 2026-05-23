@@ -1,0 +1,45 @@
+// Native Navescript Testing Framework (nvs_pytest)
+// Provides a declarative way to write and run tests.
+module std.test;
+
+import std.io;
+import std.os;
+import std.reflect;
+
+pub class TestRunner {
+    let tests: fn()[] = [];
+    let passed: number = 0;
+    let failed: number = 0;
+
+    pub fn register(test_fn: fn()) {
+        this.tests.push(test_fn);
+    }
+
+    pub fn run_all() {
+        println("Running Navescript Test Suite...");
+        for (let test in this.tests) {
+            try {
+                test();
+                this.passed++;
+                print(".");
+            } catch (e) {
+                this.failed++;
+                println("\nTest Failed: " + e.message);
+            }
+        }
+        println("\nResults: " + this.passed + " passed, " + this.failed + " failed.");
+        if (this.failed > 0) os.exit(1);
+    }
+}
+
+pub fn assert_eq<T>(actual: T, expected: T, msg: string = "") {
+    if (actual != expected) {
+        throw new Error("Assertion Failed: " + actual + " != " + expected + " " + msg);
+    }
+}
+
+pub fn assert_true(val: bool, msg: string = "") {
+    if (!val) {
+        throw new Error("Assertion Failed: Expected true " + msg);
+    }
+}

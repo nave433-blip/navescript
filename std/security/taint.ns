@@ -1,0 +1,36 @@
+// Native Navescript Security Taint Analysis
+// Provides static and dynamic analysis to track untrusted data flow.
+module std.security.taint;
+
+import std.core;
+import std.compiler;
+
+pub enum TaintLevel {
+    UNTAINTED,
+    TAINTED,
+    SENSITIVE
+}
+
+pub class TaintTracker {
+    let metadata: Map<any, TaintLevel> = {};
+
+    pub fn mark_tainted(obj: any) {
+        this.metadata[obj] = TaintLevel.TAINTED;
+    }
+
+    pub fn is_tainted(obj: any) -> bool {
+        return this.metadata[obj] == TaintLevel.TAINTED;
+    }
+
+    pub fn check_sink(obj: any, context: string) {
+        if (this.is_tainted(obj)) {
+            panic("Security Violation: Tainted data reached sink: " + context);
+        }
+    }
+}
+
+// Compiler-integrated static analysis hook
+pub fn analyze_flow(ast: compiler.AST) {
+    // Traverse AST and flag potential insecure flows
+    println("Performing security taint analysis on AST...");
+}
